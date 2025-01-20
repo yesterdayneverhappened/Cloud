@@ -60,7 +60,7 @@ const FileList = () => {
       await axios.delete(`http://localhost:5000/delete-files/${idFile}`);
       console.log("Файл удалён");
       fetchFiles(); // Обновляем список файлов после удаления
-    } catch (err) {
+    } catch (err) { //xtnf ltkftb
       console.error(err);
     }
   };
