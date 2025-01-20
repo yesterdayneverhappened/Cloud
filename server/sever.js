@@ -180,6 +180,30 @@ app.delete('/delete-files/:id', async (req, res) => {
   }
 });
 
+const addProject = async (name, description) => {
+  try {
+    const now = new Date(); // Определяем текущую дату
+    const created_at = now.toISOString().slice(0, 19).replace('T', ' ');
+
+    const sql = `INSERT INTO projects (name, description, created_at) 
+                VALUES (?, ?, ?)`;
+    const [rows] = await con.execute(sql, [name, description, created_at]);
+    console.log('Проект добавлен:', rows);
+  } catch (err) {
+    throw new Error('Ошибка при добавлении проекта: ' + err.message);
+  }
+};
+
+app.post('/add-projects', async (req, res) => {
+  try {
+    const { name, description } = req.body; // Извлекаем данные из тела запроса
+    await addProject(name, description);
+    res.status(200).json({ message: 'Проект успешно добавлен' });
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка при добавлении проекта', details: err.message });
+  }
+});
+
 // Запуск сервера
 app.listen(PORT, () => {
   console.log(`Сервер запущен на http://localhost:${PORT}`);
