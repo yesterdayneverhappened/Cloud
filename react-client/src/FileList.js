@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 
 const FileList = () => {
-  const { projectId } = useParams();  // Извлекаем projectId из URL
+  const { projectId } = useParams();
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [file, setFile] = useState(null);
@@ -30,31 +30,42 @@ const FileList = () => {
         },
       });
       setMessage(`Файл загружен: ${response.data.filename}`);
+      fetchFiles(); // Обновляем список файлов после загрузки
     } catch (error) {
       console.error(error);
       setMessage('Ошибка при загрузке файла');
     }
   };
 
-  useEffect(() => {
+  const fetchFiles = async () => {
     if (!projectId) {
       setLoading(false);
-      return; // Не выполняем запрос, если нет projectId
+      return;
     }
 
-    const fetchFiles = async () => {
-      try {
-        console.log(`Запрос на файлы для проекта с ID: ${projectId}`);
-        const response = await axios.get(`http://localhost:5000/files/${projectId}`);
-        console.log(response.data)
-        setFiles(response.data);  // Обновляем состояние с файлами
-      } catch (error) {
-        console.error('Ошибка при получении файлов:', error);
-      } finally {
-        setLoading(false);  // Завершаем загрузку
-      }
-    };
+    try {
+      console.log(`Запрос на файлы для проекта с ID: ${projectId}`);
+      const response = await axios.get(`http://localhost:5000/files/${projectId}`);
+      console.log(response.data);
+      setFiles(response.data);
+    } catch (error) {
+      console.error('Ошибка при получении файлов:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const deleteFile = async (idFile) => {
+    try {
+      await axios.delete(`http://localhost:5000/delete-files/${idFile}`);
+      console.log("Файл удалён");
+      fetchFiles(); // Обновляем список файлов после удаления
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
     fetchFiles();
   }, [projectId]);
 
@@ -81,13 +92,18 @@ const FileList = () => {
       <ul>
         {files.length > 0 ? (
           files.map((file) => (
-            <li key={file.id}>
-              <strong>{file.filename}</strong>
-              <br />
-              Путь: {file.filepath}
-              <br />
-              Загружено: {new Date(file.uploaded_at).toLocaleString()}
-            </li>
+            <div key={file.id}>
+              <li>
+                <strong>{file.filename}</strong>
+                <br />
+                Путь: {file.filepath}
+                <br />
+                Загружено: {new Date(file.uploaded_at).toLocaleString()}
+              </li>
+              <button onClick={() => deleteFile(file.id)}>
+                Удалить
+              </button>
+            </div>
           ))
         ) : (
           <p>Файлы не найдены</p>

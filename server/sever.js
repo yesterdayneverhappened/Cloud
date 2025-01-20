@@ -17,7 +17,7 @@ if (!fs.existsSync(uploadsDir)) {
 // Middleware
 app.use(cors({
   origin: 'http://localhost:3001', // Разрешить доступ только с вашего фронтенда
-  methods: 'GET, POST',
+  methods: 'GET, POST, DELETE',
 }));
 app.use(express.json());
 
@@ -125,6 +125,60 @@ app.get('/projects', async (req, res) => {
   }
 });
 
+const deleteFile = async (id) => {
+  try {
+    const selectSql = `SELECT filename FROM files WHERE id = ?`;
+    const [rows] = await con.execute(selectSql, [id]); // `rows` — это массив с результатами
+
+    if (!rows.length) {
+      console.warn("Файл с данным ID не найден в базе данных");
+      return; // Если записи нет, выходим
+    }
+
+    const filename = rows[0].filename; // Получаем имя файла
+
+    // Указываем путь к файлу
+    const uploadsDirectory = path.join(__dirname, 'uploads');
+    const filePath = path.join(uploadsDirectory, filename);
+    // Удаляем файл, если он существует
+    if (fs.existsSync(filePath)) {
+      await fs.promises.unlink(filePath);
+      console.log("Файл успешно удалён из директории");
+    } else {
+      console.warn("Файл не найден в директории:", filePath);
+    }
+
+    // Удаляем запись из базы данных
+    const deleteSql = `DELETE FROM files WHERE id = ?`;
+    await con.execute(deleteSql, [id]);
+
+  } catch (error) {
+    console.error("Ошибка удаления:", error); // Логируем ошибку
+    throw error;
+  }
+};
+
+// const selectFileName = (id) => {
+//   return new Promise((resolve, reject) => {
+//     const sql = `SELECT filename FROM files WHERE id = ?`;
+//     con.query(sql, [id], function (err, result) {
+//       if (err) {
+//         return reject(err);
+//       }
+//       resolve(result);
+//     });
+//   });
+// }
+
+app.delete('/delete-files/:id', async (req, res) => {
+  try {
+    const fileId = req.params.id;
+    await deleteFile(fileId);
+    res.status(200).json({ message: 'Файл успешно удалён' });
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка при удалении файла', details: err.message });
+  }
+});
 
 // Запуск сервера
 app.listen(PORT, () => {
