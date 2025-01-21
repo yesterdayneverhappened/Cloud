@@ -71,6 +71,15 @@ class ProjectList extends Component {
     this.fetchProjects();
   };
 
+  deleteProject = async (id) => {
+    try{
+      const response = await axios.delete(`http://localhost:5000/delete-project/${id}`);
+      console.log("Проект удалён");
+      this.fetchProjects()
+    } catch (err) {
+      console.error('Ошибка при удалении проекта:', err);
+    }
+  }
   render() {
     const { projects, loading, isModalOpen, newProjectName, newProjectDescription } = this.state;
 
@@ -88,13 +97,16 @@ class ProjectList extends Component {
         <ul>
           {projects.length > 0 ? (
             projects.map((project) => (
-              <li key={project.id}>
-                <strong>{project.name}</strong>
-                <br />
-                Описание: {project.description}
-                <br />
-                <Link to={`/files/${project.id}`}>Перейти к файлам проекта</Link>
-              </li>
+              <div>
+                <li key={project.id}>
+                  <strong>{project.name}</strong>
+                  <br />
+                  Описание: {project.description}
+                  <br />
+                  <Link to={`/files/${project.id}`}>Перейти к файлам проекта</Link>
+                </li>
+                <button onClick={() => this.deleteProject(project.id)}>Удалить</button>
+              </div>
             ))
           ) : (
             <p>Проекты не найдены</p>

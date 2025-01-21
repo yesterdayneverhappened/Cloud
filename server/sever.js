@@ -199,8 +199,40 @@ app.post('/add-projects', async (req, res) => {
     const { name, description } = req.body; // Извлекаем данные из тела запроса
     await addProject(name, description);
     res.status(200).json({ message: 'Проект успешно добавлен' });
+
+    const projectDir = path.join(__dirname, 'uploads', name);
+
+    if (!fs.existsSync(projectDir)) {
+      fs.mkdirSync(projectDir, { recursive: true }); // Создаёт папку, если её нет
+      console.log('Папка для проекта создана:', projectDir);
+    } else {
+      console.warn('Папка для проекта уже существует:', projectDir);
+    }
+
+    return rows; 
   } catch (err) {
     res.status(500).json({ error: 'Ошибка при добавлении проекта', details: err.message });
+  }
+});
+
+const deleteProject = async (id) => {
+  try{
+    const deleteSql = `DELETE FROM projects WHERE id = ?`;
+    await con.execute(deleteSql, [id]);
+    console.log("Проект удалён")
+  } catch (err) {
+    console.error("Ошибка удаления:", err); // Логируем ошибку
+    throw err;
+  }
+}
+
+app.delete('/delete-project/:id', async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    await deleteProject(projectId);
+    res.status(200).json({ message: 'Проект успешно удалён' });
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка при удалении проекта', details: err.message });
   }
 });
 
