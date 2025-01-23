@@ -180,6 +180,62 @@ app.delete('/delete-files/:id', async (req, res) => {
   }
 });
 
+const addProject = async (name, description) => {
+  try {
+    const now = new Date(); // Определяем текущую дату
+    const created_at = now.toISOString().slice(0, 19).replace('T', ' ');
+
+    const sql = `INSERT INTO projects (name, description, created_at) 
+                VALUES (?, ?, ?)`;
+    const [rows] = await con.execute(sql, [name, description, created_at]);
+    console.log('Проект добавлен:', rows);
+  } catch (err) {
+    throw new Error('Ошибка при добавлении проекта: ' + err.message);
+  }
+};
+
+app.post('/add-projects', async (req, res) => {
+  try {
+    const { name, description } = req.body; // Извлекаем данные из тела запроса
+    await addProject(name, description);
+    res.status(200).json({ message: 'Проект успешно добавлен' });
+
+    const projectDir = path.join(__dirname, 'uploads', name);
+
+    if (!fs.existsSync(projectDir)) {
+      fs.mkdirSync(projectDir, { recursive: true }); // Создаёт папку, если её нет
+      console.log('Папка для проекта создана:', projectDir);
+    } else {
+      console.warn('Папка для проекта уже существует:', projectDir);
+    }
+
+    return rows; 
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка при добавлении проекта', details: err.message });
+  }
+});
+
+const deleteProject = async (id) => {
+  try{
+    const deleteSql = `DELETE FROM projects WHERE id = ?`;
+    await con.execute(deleteSql, [id]);
+    console.log("Проект удалён")
+  } catch (err) {
+    console.error("Ошибка удаления:", err); // Логируем ошибку
+    throw err;
+  }
+}
+
+app.delete('/delete-project/:id', async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    await deleteProject(projectId);
+    res.status(200).json({ message: 'Проект успешно удалён' });
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка при удалении проекта', details: err.message });
+  }
+});
+
 // Запуск сервера
 app.listen(PORT, () => {
   console.log(`Сервер запущен на http://localhost:${PORT}`);
