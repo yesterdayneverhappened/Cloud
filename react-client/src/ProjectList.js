@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Импортируем Link для создания ссылок
+import ChartsPage from './ChartsPage';
 
 class ProjectList extends Component {
   constructor(props) {

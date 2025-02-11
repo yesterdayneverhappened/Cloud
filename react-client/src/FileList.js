@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
+import ProjectCharts from './ChartsPage';
 
 const FileList = () => {
   const { projectId } = useParams();
@@ -22,6 +23,8 @@ const FileList = () => {
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('projectId', projectId);
+    console.log("Отрпавил на проект", projectId)
 
     try {
       const response = await axios.post('http://localhost:5000/upload', formData, {
@@ -40,6 +43,7 @@ const FileList = () => {
   const fetchFiles = async () => {
     if (!projectId) {
       setLoading(false);
+      console.log(projectId)
       return;
     }
 
@@ -109,6 +113,7 @@ const FileList = () => {
           <p>Файлы не найдены</p>
         )}
       </ul>
+      <ProjectCharts/>
     </div>
   );
 };

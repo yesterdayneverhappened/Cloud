@@ -16,7 +16,7 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3001', // Разрешить доступ только с вашего фронтенда
+  origin: 'http://localhost:3000', // Разрешить доступ только с вашего фронтенда
   methods: 'GET, POST, DELETE',
 }));
 app.use(express.json());
@@ -33,7 +33,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 const con = mysql.createPool({
   host: "localhost",
-  user: "mysql",
+  user: "panic",
   password: "mysql",
   database: "mydb"
 });
@@ -62,6 +62,7 @@ const updateProject = async (project_id, filename, filepath) => {
 // Эндпоинт для загрузки файлов
 app.post('/upload', upload.single('file'), async (req, res) => {
   const file = req.file;
+  const projectId = req.body.projectId;
   const timestamp = new Date().toISOString();
 
   if (!file) {
@@ -74,7 +75,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     uploadedAt: timestamp,
   });
 
-  await updateProject(1, file.originalname, file.filename, timestamp);
+  await updateProject(projectId, file.originalname, file.filename, timestamp);
 });
 
 // Получение списка файлов
@@ -101,8 +102,6 @@ app.get('/files/:projectId', async (req, res) => {
     res.status(500).json({ error: 'Ошибка при получении файлов', details: err });
   }
 });
-
-
 
 const projectList = async () => {
   const sql = "SELECT * FROM projects";
@@ -157,6 +156,42 @@ const deleteFile = async (id) => {
     throw error;
   }
 };
+
+app.get('/files-with-sizes/:projectId', async (req, res) => {
+  const { projectId } = req.params;
+
+  const query = 'SELECT id, filename FROM files WHERE project_id = ?';
+
+  try {
+    // Выполняем запрос к базе данных с использованием execute
+    const [results] = await con.execute(query, [projectId]);
+
+    // Собираем информацию о файлах
+    const fileDetails = results.map((file) => {
+      const filePath = path.join(__dirname, 'uploads', file.filename);
+      let size = 0;
+
+      try {
+        if (fs.existsSync(filePath)) {
+          size = fs.statSync(filePath).size; // Получаем размер файла
+        }
+      } catch (fsError) {
+        console.error(`Ошибка обработки файла ${file.filename}:`, fsError);
+      }
+
+      return {
+        id: file.id,
+        filename: file.filename,
+        size,
+      };
+    });
+
+    res.json(fileDetails);
+  } catch (err) {
+    console.error('Ошибка при выполнении запроса:', err);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
 
 // const selectFileName = (id) => {
 //   return new Promise((resolve, reject) => {
