@@ -3,6 +3,8 @@ import axios from 'axios';
 import { Link } from 'react-router-dom'; // Импортируем Link для создания ссылок
 import './ProjectList.css'; // Подключаем стили (создайте этот файл)
 
+import './ProjectList.css'; // Подключаем стили (создайте этот файл)
+
 class ProjectList extends Component {
   constructor(props) {
     super(props);
