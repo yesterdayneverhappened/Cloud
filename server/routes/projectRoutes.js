@@ -5,6 +5,6 @@ const router = express.Router();
 
 router.get('/', getProjects);
 router.post('/', createProject);
-router.delete('/:id', deleteProject);
+router.delete('/-delete:id', deleteProject);
 
 module.exports = router;

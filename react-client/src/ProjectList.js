@@ -55,7 +55,7 @@ class ProjectList extends Component {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/add-projects', {
+      const response = await axios.post('http://localhost:5000/projects', {
         name: newProjectName,
         description: newProjectDescription,
       });
@@ -75,7 +75,7 @@ class ProjectList extends Component {
 
   deleteProject = async (id) => {
     try{
-      const response = await axios.delete(`http://localhost:5000/delete-project/${id}`);
+      const response = await axios.delete(`http://localhost:5000/projects-delete/${id}`);
       console.log("Проект удалён");
       this.fetchProjects()
     } catch (err) {

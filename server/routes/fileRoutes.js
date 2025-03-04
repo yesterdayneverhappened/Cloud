@@ -2,36 +2,55 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const { getFiles, deleteFile } = require('../controllers/fileController');
+const { updateProject, getFiles, deleteFile, getFilesWithSizes } = require('../controllers/fileController');
 
 const router = express.Router();
+
+// Настройка хранения файлов
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads');
+    const uploadPath = path.join(__dirname, '..', 'uploads');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath);
+    }
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    cb(null, Date.now() + '-' + file.originalname);
   },
 });
 
 const upload = multer({ storage });
 
+// Маршрут для загрузки файлов
 router.post('/upload', upload.single('file'), async (req, res) => {
+  console.log('Файл загружен:', req.file); // Проверяем, какой файл загружается
   const file = req.file;
   const projectId = req.body.projectId;
+  console.log('Запрашиваем файлы для projectId:', projectId);
+  console.log('file', file)
 
   if (!file) {
-    return res.status(400).send('Файл не найден');
+    return res.status(400).json({ error: 'Файл не найден' });
   }
 
-  await updateProject(projectId, file.originalname, file.filename);
-  res.json({
-    filename: file.originalname,
-    filepath: path.join(__dirname, '..', 'uploads', file.filename),
-  });
+  try {
+    await updateProject(projectId, file.filename, `/uploads/${file.filename}`);
+    res.json({ filename: file.originalname, filepath: `/uploads/${file.filename}` });
+  } catch (error) {
+    console.error('Ошибка при сохранении файла:', error);
+    res.status(500).json({ error: 'Ошибка при сохранении файла' });
+  }
 });
 
+
+// Получение файлов проекта
 router.get('/:projectId', getFiles);
-router.delete('/delete/:id', deleteFile);
+
+// Удаление файла
+router.delete('/:id', deleteFile);
+
+// Получение информации о размере файлов
+router.get('/size/:projectId', getFilesWithSizes);
 
 module.exports = router;

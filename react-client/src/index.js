@@ -5,6 +5,7 @@ import App from './App';
 import FileList from './FileList';
 import AuthPage from './AuthPage'
 import RegisterPage from './RegistredPage';
+import ProjectList from './ProjectList';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -12,9 +13,11 @@ root.render(
     <Routes>
         <Route path="/login" element={<AuthPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route exact path="/" element={<AuthPage />} />
+        <Route path="/" element={<ProjectList />} />
+        <Route path="/projects" element={<ProjectList />} />
+        <Route path="/files/:projectId" element={<FileList />} />
     </Routes>
-</BrowserRouter>
+  </BrowserRouter>
 );
 
 // If you want to start measuring performance in your app, pass a function

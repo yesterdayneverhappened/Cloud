@@ -11,20 +11,28 @@ const fileList = async (project_id) => {
 };
 
 const addFile = async (project_id, filename, filepath) => {
-  const now = new Date();
-  const created_at = now.toISOString().slice(0, 19).replace('T', ' ');
-
+  console.log(`Добавление файла: ${filename} в проект ${project_id}`);
   const sql = `INSERT INTO files (project_id, filename, filepath, created_at) VALUES (?, ?, ?, ?)`;
   try {
-    await con.execute(sql, [project_id, filename, filepath, created_at]);
+    await con.execute(sql, [project_id, filename, filepath, new Date()]);
   } catch (err) {
+    console.error('Ошибка при добавлении файла в базу:', err);
     throw err;
   }
 };
 
-const deleteFileFromDatabase = async (id) => {
-  const deleteSql = `DELETE FROM files WHERE id = ?`;
-  await con.execute(deleteSql, [id]);
+const deleteFileFromDatabase = async (fileId) => {
+  await con.execute(`DELETE FROM files WHERE id = ?`, [fileId]);
+};
+const getFilesByProjectId = async (projectId) => {
+  const query = 'SELECT id, filename FROM files WHERE project_id = ?';
+  const [results] = await con.execute(query, [projectId]);
+  return results;
 };
 
-module.exports = { fileList, addFile, deleteFileFromDatabase };
+const getFileById = async (fileId) => {
+  const [fileData] = await con.execute(`SELECT filepath FROM files WHERE id = ?`, [fileId]);
+  return fileData.length > 0 ? fileData[0] : null;
+};
+
+module.exports = { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById };

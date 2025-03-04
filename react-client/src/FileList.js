@@ -24,48 +24,46 @@ const FileList = () => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('projectId', projectId);
-    console.log("Отрпавил на проект", projectId)
 
     try {
-      const response = await axios.post('http://localhost:5000/upload', formData, {
+      const response = await axios.post('http://localhost:5000/files/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       setMessage(`Файл загружен: ${response.data.filename}`);
+      setFile(null);
       fetchFiles(); // Обновляем список файлов после загрузки
     } catch (error) {
-      console.error(error);
+      console.error('Ошибка при загрузке файла:', error);
       setMessage('Ошибка при загрузке файла');
     }
   };
 
   const fetchFiles = async () => {
-    if (!projectId) {
-      setLoading(false);
-      console.log(projectId)
-      return;
-    }
-
     try {
-      console.log(`Запрос на файлы для проекта с ID: ${projectId}`);
-      const response = await axios.get(`http://localhost:5000/files/${projectId}`);
-      console.log(response.data);
-      setFiles(response.data);
+      const response = await fetch(`http://localhost:5000/files/${projectId}`);
+      if (!response.ok) {
+        throw new Error('Ошибка при получении файлов');
+      }
+      const data = await response.json();
+      console.log('Файлы с сервера:', data);
+      setFiles(data);
     } catch (error) {
-      console.error('Ошибка при получении файлов:', error);
+      console.error('Ошибка:', error);
     } finally {
-      setLoading(false);
+      setLoading(false); // Устанавливаем флаг загрузки в false в любом случае
     }
   };
 
   const deleteFile = async (idFile) => {
+    console.log(idFile)
     try {
-      await axios.delete(`http://localhost:5000/delete-files/${idFile}`);
-      console.log("Файл удалён");
+      await axios.delete(`http://localhost:5000/files/${idFile}`);
+      console.log('Файл удалён');
       fetchFiles(); // Обновляем список файлов после удаления
-    } catch (err) { //xtnf ltkftb
-      console.error(err);
+    } catch (err) {
+      console.error('Ошибка при удалении файла:', err);
     }
   };
 
@@ -73,16 +71,9 @@ const FileList = () => {
     fetchFiles();
   }, [projectId]);
 
-  if (loading) {
-    return <p>Загрузка...</p>;
-  }
-
-  const back = () => {
-    navigate('/');
-  };
-
   return (
     <div>
+      <ProjectCharts />
       <div>
         <h1>Загрузка файла</h1>
         <input type="file" onChange={handleFileChange} />
@@ -90,30 +81,31 @@ const FileList = () => {
         {message && <p>{message}</p>}
       </div>
       <div>
-        <button onClick={back}>Назад</button>
+        <button onClick={() => navigate('/projects')}>Назад</button>
       </div>
       <h2>Список файлов для проекта {projectId}</h2>
-      <ul>
-        {files.length > 0 ? (
-          files.map((file) => (
-            <div key={file.id}>
-              <li>
-                <strong>{file.filename}</strong>
-                <br />
-                Путь: {file.filepath}
-                <br />
-                Загружено: {new Date(file.uploaded_at).toLocaleString()}
-              </li>
-              <button onClick={() => deleteFile(file.id)}>
-                Удалить
-              </button>
-            </div>
-          ))
-        ) : (
-          <p>Файлы не найдены</p>
-        )}
-      </ul>
-      <ProjectCharts/>
+      {loading ? (
+        <p>Загрузка...</p>
+      ) : (
+        <ul>
+          {files.length > 0 ? (
+            files.map((file) => (
+              <div key={file.id}>
+                <li>
+                  <strong>{file.filename}</strong>
+                  <br />
+                  Путь: {file.filepath}
+                  <br />
+                  Загружено: {new Date(file.created_at).toLocaleString()}
+                </li>
+                <button onClick={() => deleteFile(file.id)}>Удалить</button>
+              </div>
+            ))
+          ) : (
+            <p>Файлы не найдены</p>
+          )}
+        </ul>
+      )}
     </div>
   );
 };

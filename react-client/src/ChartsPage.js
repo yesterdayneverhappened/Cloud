@@ -14,7 +14,7 @@ const ProjectCharts = () => {
   useEffect(() => {
     const fetchFilesWithSizes = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/files-with-sizes/${projectId}`);
+        const response = await axios.get(`http://localhost:5000/files/size/${projectId}`);
         
         if (response.status === 200) {
           setFiles(response.data); // Устанавливаем файлы
@@ -101,16 +101,15 @@ const ProjectCharts = () => {
 
   return (
     <div>
-      <h1>Диаграммы для проекта {projectId}</h1>
-      <div style={{ width: '600px', margin: '20px auto' }}>
+      <div style={{ width: '400px', margin: '20px auto' }}>
         <h2>Круговая диаграмма</h2>
         <Pie data={pieData} />
       </div>
-      <div style={{ width: '600px', margin: '20px auto' }}>
+      <div style={{ width: '700px', margin: '20px auto' }}>
         <h2>Столбчатая диаграмма</h2>
         <Bar data={barData} />
       </div>
-      <div style={{ width: '600px', margin: '20px auto' }}>
+      <div style={{ width: '700px', margin: '20px auto' }}>
         <h2>Линейная диаграмма</h2>
         <Line data={lineData} />
       </div>
