@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fileRoutes = require('./routes/fileRoutes');
 const projectRoutes = require('./routes/projectRoutes');
+const userRoutes = require('./routes/userRoutes');
 const errorHandler = require('./middlewares/errorHandler');
 const path = require('path');
 const fs = require('fs');
@@ -20,6 +21,7 @@ app.use(express.json());
 // Подключение маршрутов
 app.use('/files', fileRoutes);
 app.use('/projects', projectRoutes);
+app.use('/api/users', userRoutes);
 app.use(errorHandler);
 
 // Создание папки `uploads`, если её нет

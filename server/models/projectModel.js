@@ -10,6 +10,16 @@ const projectList = async () => {
   }
 };
 
+const userProjectList = async (clientId) => {
+  const sql = "SELECT * FROM projects WHERE client_id = ?";
+  try {
+    const [rows] = await con.execute(sql, [clientId]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
+
 const addProject = async (name, description) => {
   const now = new Date();
   const created_at = now.toISOString().slice(0, 19).replace('T', ' ');
@@ -23,4 +33,4 @@ const deleteProjectFromDatabase = async (id) => {
   await con.execute(deleteSql, [id]);
 };
 
-module.exports = { projectList, addProject, deleteProjectFromDatabase };
+module.exports = { projectList, addProject, deleteProjectFromDatabase, userProjectList };

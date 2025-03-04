@@ -6,6 +6,7 @@ import FileList from './FileList';
 import AuthPage from './AuthPage'
 import RegisterPage from './RegistredPage';
 import ProjectList from './ProjectList';
+import UserProjects from './UserProjectList';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -16,6 +17,7 @@ root.render(
         <Route path="/" element={<ProjectList />} />
         <Route path="/projects" element={<ProjectList />} />
         <Route path="/files/:projectId" element={<FileList />} />
+        <Route path="/yourproject" element={<UserProjects />} />
     </Routes>
   </BrowserRouter>
 );
