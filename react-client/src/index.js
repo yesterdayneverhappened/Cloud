@@ -7,6 +7,7 @@ import AuthPage from './AuthPage'
 import RegisterPage from './RegistredPage';
 import ProjectList from './ProjectList';
 import UserProjects from './UserProjectList';
+import './index.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

@@ -39,7 +39,7 @@ const register = async (req, res) => {
         return res.status(401).json({ error: 'Неверный email или пароль' });
       }
   
-      const token = jwt.sign({ id: user.id, email: user.domain }, 'your_secret_key', { expiresIn: '1h' });
+      const token = jwt.sign({ id: user.id, email: user.domain }, 'your_secret_key', { expiresIn: '5h' });
       res.json({ message: 'Вход выполнен', token });
     } catch (err) {
       console.error("Ошибка авторизации:", err);
