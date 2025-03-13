@@ -1,11 +1,10 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom'; // Импортируем Link для создания ссылок
-import './ProjectList.css'; // Подключаем стили (создайте этот файл)
+import { jwtDecode } from 'jwt-decode';
+import './UserProjectList.css';
+import Project from './components/Project';
 
-import './ProjectList.css'; // Подключаем стили (создайте этот файл)
-
-class ProjectList extends Component {
+class UserProjects extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -18,21 +17,73 @@ class ProjectList extends Component {
   }
 
   componentDidMount() {
-    this.fetchProjects();
+    this.fetchUserProjects();
   }
 
-  fetchProjects = async () => {
+  fetchUserProjects = async () => {
+    const token = localStorage.getItem('token');
+  
+    if (!token) {
+      alert('Пожалуйста, войдите в систему');
+      return;
+    }
     try {
-      const response = await axios.get('http://localhost:5000/projects');
+      const decodedToken = jwtDecode(token);
+      const userId = decodedToken.id;
+  
+      const response = await axios.get(`http://localhost:5000/projects/user/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
       this.setState({
         projects: response.data,
         loading: false,
       });
     } catch (error) {
-      console.error('Ошибка при получении проектов:', error);
+      console.error('Ошибка при получении проектов пользователя:', error);
+      this.setState({ loading: false });
     }
   };
-
+  
+  handleAddProject = async () => {
+    const { newProjectName, newProjectDescription } = this.state;
+    const token = localStorage.getItem('token');
+  
+    if (!token) {
+      alert('Пожалуйста, войдите в систему');
+      return;
+    }
+  
+    if (!newProjectName || !newProjectDescription) {
+      alert('Пожалуйста, заполните все поля');
+      return;
+    }
+  
+    try {
+      const decodedToken = jwtDecode(token);
+      const userId = decodedToken.id;
+  
+      const response = await axios.post(
+        'http://localhost:5000/projects',
+        {
+          name: newProjectName,
+          description: newProjectDescription,
+          userId: userId,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+  
+      this.setState((prevState) => ({
+        projects: [...prevState.projects, response.data],
+        isModalOpen: false,
+        newProjectName: '',
+        newProjectDescription: '',
+      }));
+    } catch (error) {
+      console.error('Ошибка при добавлении проекта:', error);
+    }
+  };
+  
   openModal = () => {
     this.setState({ isModalOpen: true });
   };
@@ -46,42 +97,6 @@ class ProjectList extends Component {
     this.setState({ [name]: value });
   };
 
-  handleAddProject = async () => {
-    const { newProjectName, newProjectDescription } = this.state;
-
-    if (!newProjectName || !newProjectDescription) {
-      alert('Пожалуйста, заполните все поля');
-      return;
-    }
-
-    try {
-      const response = await axios.post('http://localhost:5000/projects', {
-        name: newProjectName,
-        description: newProjectDescription,
-      });
-
-      this.setState((prevState) => ({
-        projects: [...prevState.projects, response.data],
-        isModalOpen: false,
-        newProjectName: '',
-        newProjectDescription: '',
-      }));
-    } catch (error) {
-      console.error('Ошибка при добавлении проекта:', error);
-    }
-
-    this.fetchProjects();
-  };
-
-  deleteProject = async (id) => {
-    try{
-      const response = await axios.delete(`http://localhost:5000/projects-delete/${id}`);
-      console.log("Проект удалён");
-      this.fetchProjects()
-    } catch (err) {
-      console.error('Ошибка при удалении проекта:', err);
-    }
-  }
   render() {
     const { projects, loading, isModalOpen, newProjectName, newProjectDescription } = this.state;
 
@@ -90,30 +105,19 @@ class ProjectList extends Component {
     }
 
     return (
-      <div>
-        <div>
-          <button onClick={this.openModal}>Добавить</button>
-        </div>
-
-        <h1>Список проектов</h1>
-        <ul>
+      <div className="user-projects-container">
+        <h1>Ваши проекты</h1>
+        <button className="add-button" onClick={this.openModal}>Добавить проект</button>
+        <ul className="project-list">
           {projects.length > 0 ? (
             projects.map((project) => (
-              <div>
-                <li key={project.id}>
-                  <strong>{project.name}</strong>
-                  <br />
-                  Описание: {project.description}
-                  <br />
-                  <Link to={`/files/${project.id}`}>Перейти к файлам проекта</Link>
-                </li>
-                <button onClick={() => this.deleteProject(project.id)}>Удалить</button>
-              </div>
+              <Project name={project.name} description={project.description} />
             ))
           ) : (
-            <p>Проекты не найдены</p>
+            <p>У вас нет проектов</p>
           )}
         </ul>
+        <button className="back-button" onClick={() => window.history.back()}>Назад</button>
 
         {isModalOpen && (
           <div className="modal">
@@ -144,4 +148,4 @@ class ProjectList extends Component {
   }
 }
 
-export default ProjectList;
+export default UserProjects;

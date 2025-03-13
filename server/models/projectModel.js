@@ -10,12 +10,23 @@ const projectList = async () => {
   }
 };
 
-const addProject = async (name, description) => {
+const userProjectList = async (clientId) => {
+  const sql = "SELECT * FROM projects WHERE client_id = ?";
+  try {
+    const [rows] = await con.execute(sql, [clientId]);
+    console.log(rows)
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
+
+const addProject = async (name, description, userID) => {
   const now = new Date();
   const created_at = now.toISOString().slice(0, 19).replace('T', ' ');
 
-  const sql = `INSERT INTO projects (name, description, created_at) VALUES (?, ?, ?)`;
-  await con.execute(sql, [name, description, created_at]);
+  const sql = `INSERT INTO projects (name, description, created_at, client_id) VALUES (?, ?, ?, ?)`;
+  await con.execute(sql, [name, description, created_at, userID]);
 };
 
 const deleteProjectFromDatabase = async (id) => {
@@ -23,4 +34,4 @@ const deleteProjectFromDatabase = async (id) => {
   await con.execute(deleteSql, [id]);
 };
 
-module.exports = { projectList, addProject, deleteProjectFromDatabase };
+module.exports = { projectList, addProject, deleteProjectFromDatabase, userProjectList };

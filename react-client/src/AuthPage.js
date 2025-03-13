@@ -14,9 +14,10 @@ export default function AuthPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:5000/login', { email, password, client_id: 1 });
+      const response = await axios.post('http://localhost:5000/api/users/login', { email, password, client_id: 1 });
       setMessage('Login successful!');
       localStorage.setItem('token', response.data.token);
+      navigate('/yourproject')
     } catch (error) {
       setMessage(error.response?.data?.error || 'Something went wrong');
     }

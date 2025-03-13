@@ -1,0 +1,26 @@
+/* Общие стили для страницы */
+.user-projects-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  /* Заголовок */
+  .user-projects-container h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  /* Список проектов */
+  .project-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  
+  
