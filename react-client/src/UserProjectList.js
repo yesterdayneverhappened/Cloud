@@ -111,7 +111,7 @@ class UserProjects extends Component {
         <ul className="project-list">
           {projects.length > 0 ? (
             projects.map((project) => (
-              <Project name={project.name} description={project.description} />
+              <Project name={project.name} description={project.description} id={project.id} />
             ))
           ) : (
             <p>У вас нет проектов</p>
