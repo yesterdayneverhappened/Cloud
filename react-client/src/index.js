@@ -19,6 +19,7 @@ root.render(
         <Route path="/projects" element={<ProjectList />} />
         <Route path="/files/:projectId" element={<FileList />} />
         <Route path="/yourproject" element={<UserProjects />} />
+        <Route path="/yourproject/:projectId" element={<FileList />} />
     </Routes>
   </BrowserRouter>
 );
