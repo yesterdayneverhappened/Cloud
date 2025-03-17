@@ -3,11 +3,12 @@ import '../styles-for-compontnts/Project.css';
 
 export default function File({ file, deleteFile, onOpenContextMenu }) {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [showModal, setShowModal] = useState(false); // Состояние для модального окна
   const menuRef = useRef(null);
 
   // Показать/скрыть контекстное меню
   const toggleMenu = (e) => {
-    e.stopPropagation(); // Предотвращаем закрытие меню при клике по троеточию
+    e.stopPropagation();
     onOpenContextMenu();
     setIsMenuVisible(!isMenuVisible);
   };
@@ -30,7 +31,7 @@ export default function File({ file, deleteFile, onOpenContextMenu }) {
   const handleMenuAction = (action) => {
     switch (action) {
       case 'info':
-        alert(`Информация о файле:\nНазвание: ${file.filename}\nДата: ${new Date(file.created_at).toLocaleString()}`);
+        setShowModal(true); // Открытие модального окна с информацией
         break;
       case 'rename':
         const newName = prompt('Введите новое имя файла:', file.filename);
@@ -80,6 +81,20 @@ export default function File({ file, deleteFile, onOpenContextMenu }) {
             <div onClick={() => handleMenuAction('delete')}>❌ Удалить</div>
             <div onClick={() => handleMenuAction('move')}>📂 Переместить</div>
             <div onClick={() => handleMenuAction('copy')}>📄 Копировать</div>
+          </div>
+        )}
+
+        {/* Модальное окно на весь экран */}
+        {showModal && (
+          <div className="modal-overlay" onClick={() => setShowModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-close" onClick={() => setShowModal(false)}>✖</button>
+              <h2>Информация о файле</h2>
+              <p><strong>Название:</strong> {file.filename}</p>
+              <p><strong>Размер:</strong> {file.file_size} байт</p>
+              <p><strong>Расширение:</strong> {file.file_extension}</p>
+              <p><strong>Дата загрузки:</strong> {new Date(file.created_at).toLocaleString()}</p>
+            </div>
           </div>
         )}
       </div>
