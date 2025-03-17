@@ -18,6 +18,7 @@
     width: 100%;
     display: flex;
     flex-direction: column;
+    
   }
   
   /* Название проекта */
@@ -25,6 +26,8 @@
     font-size: 18px;
     font-weight: bold;
     color: #FFC074;
+    text-decoration: none; 
+    
   }
   
   /* Описание проекта */
@@ -32,6 +35,8 @@
     font-size: 14px;
     color: #666;
     margin-top: 5px;
+    text-decoration: none;  
+    display: block;
   }
   
   /* Кнопка возврата */
@@ -48,6 +53,8 @@
     border-radius: 6px;
     cursor: pointer;
     transition: background 0.3s ease;
+    text-decoration: none; 
+    display: block;
   }
   
   .back-button:hover {

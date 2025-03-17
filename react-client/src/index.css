@@ -21,3 +21,6 @@ code {
 p {
   font-family: 'InstrumentSans';
 }
+a {
+  text-decoration: none;
+}

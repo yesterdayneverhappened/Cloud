@@ -1,10 +1,8 @@
 import React from 'react'
-import '../styles-for-compontnts/Project.css'
-import { useNavigate } from 'react-router-dom';
+import '../styles-for-compontnts/File.css'
 export default function Project({ name, description, id }) {
-    const navigate = useNavigate();
   return (
-    <div className='project-item' onClick={() => navigate(`/projects/${id}`)}>
+    <div className='project-item'>
         <div className='project-info'>
             <p className='project-name'>{name}</p>
             <p className='project-description'>{description}</p>
