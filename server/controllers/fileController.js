@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById } = require('../models/fileModel');
-const updateProject = async (project_id, filename, filepath) => {
-  await addFile(project_id, filename, filepath);
+const updateProject = async (project_id, filename, filepath, fileSize, fileExtension) => {
+  await addFile(project_id, filename, filepath, fileSize, fileExtension);
 };
 
 const getFiles = async (req, res) => {

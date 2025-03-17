@@ -2,12 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Router, Routes, Route } from 'react-router-dom';
 import App from './App';
-import FileList from './FileList';
 import AuthPage from './AuthPage'
 import RegisterPage from './RegistredPage';
 import ProjectList from './ProjectList';
 import UserProjects from './UserProjectList';
 import './index.css'
+import UserFileList from './UserFileList';
+import FileList from './FileList';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -15,11 +16,11 @@ root.render(
     <Routes>
         <Route path="/login" element={<AuthPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/" element={<ProjectList />} />
+        <Route path="/" element={<AuthPage />} />
         <Route path="/projects" element={<ProjectList />} />
         <Route path="/files/:projectId" element={<FileList />} />
         <Route path="/yourproject" element={<UserProjects />} />
-        <Route path="/yourproject/:projectId" element={<FileList />} />
+        <Route path="/yourproject/:projectId" element={<UserFileList />} />
     </Routes>
   </BrowserRouter>
 );

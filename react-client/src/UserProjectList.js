@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import { Link } from 'react-router-dom';
 import './UserProjectList.css';
 import Project from './components/Project';
 
@@ -108,15 +109,17 @@ class UserProjects extends Component {
       <div className="user-projects-container">
         <h1>Ваши проекты</h1>
         <button className="add-button" onClick={this.openModal}>Добавить проект</button>
-        <ul className="project-list">
+        <div className="project-list">
           {projects.length > 0 ? (
             projects.map((project) => (
-              <Project name={project.name} description={project.description} id={project.id} />
+                <Link to={`/yourproject/${project.id}`}>
+                    <Project name={project.name} description={project.description} id={project.id} />
+                </Link>
             ))
           ) : (
             <p>У вас нет проектов</p>
           )}
-        </ul>
+        </div>
         <button className="back-button" onClick={() => window.history.back()}>Назад</button>
 
         {isModalOpen && (

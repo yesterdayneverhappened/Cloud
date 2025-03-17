@@ -10,17 +10,23 @@ const fileList = async (project_id) => {
   }
 };
 
-const addFile = async (project_id, filename, filepath) => {
+const addFile = async (project_id, filename, filepath, fileSize, fileExtension) => {
   console.log(`Добавление файла: ${filename} в проект ${project_id}`);
-  const sql = `INSERT INTO files (project_id, filename, filepath, created_at) VALUES (?, ?, ?, ?)`;
+  const sql = `INSERT INTO files (project_id, filename, filepath, file_size, file_extension, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
   try {
-    await con.execute(sql, [project_id, filename, filepath, new Date()]);
+    await con.execute(sql, [
+      project_id,
+      filename,
+      filepath,
+      fileSize,
+      fileExtension,
+      new Date(),
+    ]);
   } catch (err) {
     console.error('Ошибка при добавлении файла в базу:', err);
     throw err;
   }
 };
-
 const deleteFileFromDatabase = async (fileId) => {
   await con.execute(`DELETE FROM files WHERE id = ?`, [fileId]);
 };
