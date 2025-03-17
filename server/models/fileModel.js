@@ -35,10 +35,16 @@ const getFilesByProjectId = async (projectId) => {
   const [results] = await con.execute(query, [projectId]);
   return results;
 };
+const renameFileq = async (id, newName, newPath) => {
+  console.log('newName:', newName);
+console.log('newPath:', newPath);
+console.log('id:', id);
 
+  await con.execute('UPDATE files SET filename = ?, filepath = ? WHERE id = ?', [newName, newPath, id]);
+};
 const getFileById = async (fileId) => {
   const [fileData] = await con.execute(`SELECT filepath FROM files WHERE id = ?`, [fileId]);
   return fileData.length > 0 ? fileData[0] : null;
 };
 
-module.exports = { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById };
+module.exports = { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq };

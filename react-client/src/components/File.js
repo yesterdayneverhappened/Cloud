@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import '../styles-for-compontnts/Project.css';
+import axios from 'axios';
 
-export default function File({ file, deleteFile, onOpenContextMenu }) {
+export default function File({ file, deleteFile, onOpenContextMenu, renameFile }) {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [showModal, setShowModal] = useState(false); // Состояние для модального окна
   const menuRef = useRef(null);
@@ -27,17 +28,17 @@ export default function File({ file, deleteFile, onOpenContextMenu }) {
     };
   }, []);
 
+  // Функция переименования файла
+  
+  
   // Действия для пунктов меню
-  const handleMenuAction = (action) => {
+  const handleMenuAction = async (action) => {
     switch (action) {
       case 'info':
         setShowModal(true); // Открытие модального окна с информацией
         break;
       case 'rename':
-        const newName = prompt('Введите новое имя файла:', file.filename);
-        if (newName) {
-          alert(`Файл переименован в: ${newName}`);
-        }
+        await renameFile(file); // Переименовать файл
         break;
       case 'delete':
         deleteFile(file.id);

@@ -75,6 +75,27 @@ const UserFileList = () => {
   const handleOpenContextMenu = (fileId) => {
     setActiveFileId(fileId);
   };
+
+  const renameFile = async (file) => {
+    const newName = prompt('Введите новое имя файла:', file.filename);
+    if (newName) {
+      try {
+        const response = await axios.put(
+          `http://localhost:5000/files/rename/${file.id}`,
+          { newName }  // Здесь передается newName в теле запроса
+        );
+        if (response.status === 200) {
+          alert(`Файл переименован в: ${newName}`);
+          fetchFiles();
+        } else {
+          alert('Ошибка при переименовании файла');
+        }
+      } catch (error) {
+        console.error('Ошибка при переименовании файла:', error);
+        alert('Ошибка при переименовании файла');
+      }
+    }
+  };
   return (
     <div className="container">
       <div className="upload-section">
@@ -97,7 +118,7 @@ const UserFileList = () => {
         <div className="file-list">
           {files.length > 0 ? (
             files.map((file) => (
-              <File file={file} deleteFile={deleteFile} onOpenContextMenu={() => handleOpenContextMenu(file.id)}/>
+              <File file={file} deleteFile={deleteFile} renameFile={renameFile} onOpenContextMenu={() => handleOpenContextMenu(file.id)}/>
             ))
           ) : (
             <p>Файлы не найдены</p>

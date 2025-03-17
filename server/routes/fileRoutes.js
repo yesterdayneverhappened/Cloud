@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const { updateProject, getFiles, deleteFile, getFilesWithSizes } = require('../controllers/fileController');
+const { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile } = require('../controllers/fileController');
 
 const router = express.Router();
 
@@ -65,5 +65,8 @@ router.delete('/:id', deleteFile);
 
 // Получение информации о размере файлов
 router.get('/size/:projectId', getFilesWithSizes);
+
+router.get('/download/:id', downloadFile);
+router.put('/rename/:id', renameFile);
 
 module.exports = router;
