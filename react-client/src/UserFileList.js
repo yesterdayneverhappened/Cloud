@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import './UserFileList.css';
 import File from './components/File';
+import { jwtDecode } from 'jwt-decode';
 
 const UserFileList = () => {
   const { projectId } = useParams();
@@ -10,11 +11,20 @@ const UserFileList = () => {
   const [loading, setLoading] = useState(true);
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState('');
+  const [userId, setUserId] = useState(null);
 
   const navigate = useNavigate();
 
+  const getUserIdFromToken = () => {
+    const token = localStorage.getItem('token');
+    const decodedToken = jwtDecode(token);
+    const userId = decodedToken.id;
+    setUserId(userId)
+};
+
   useEffect(() => {
     fetchFiles();
+    getUserIdFromToken();
   }, [projectId]);
 
   const handleFileChange = (e) => {
@@ -69,6 +79,18 @@ const UserFileList = () => {
       setMessage('Ошибка при удалении файла');
     }
   };
+
+  const moveFile = async (fileId, projectId) => {
+    try {
+      await axios.put(`http://localhost:5000/files/replace/${fileId}`, { projectId });
+      fetchFiles();
+      return;
+    } catch (error) {
+      console.error('Ошибка при перемещении файла:', error);
+      alert('Ошибка при перемещении файла');
+    }
+  };
+  
   const [activeFileId, setActiveFileId] = useState(null);
 
   // Функция для закрытия предыдущего контекстного меню
@@ -118,7 +140,14 @@ const UserFileList = () => {
         <div className="file-list">
           {files.length > 0 ? (
             files.map((file) => (
-              <File file={file} deleteFile={deleteFile} renameFile={renameFile} onOpenContextMenu={() => handleOpenContextMenu(file.id)}/>
+              <File 
+                file={file} 
+                deleteFile={deleteFile} 
+                renameFile={renameFile} 
+                onOpenContextMenu={() => handleOpenContextMenu(file.id)}
+                userId={userId}
+                moveFile={moveFile}
+              />
             ))
           ) : (
             <p>Файлы не найдены</p>

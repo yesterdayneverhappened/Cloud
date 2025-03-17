@@ -105,5 +105,76 @@
   .modal-close:hover {
     color: #ff4d4d;
   }
-  
+  /* Модальное окно перемещения файла */
+.move-file-modal {
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  width: 420px;
+  max-height: 80%;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-in-out;
+  top: 0;
+  left: 0;
+  z-index: 999;
+}
+
+.move-file-title {
+  text-align: center;
+  color: #2a3d66;
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+
+.move-file-description {
+  text-align: center;
+  color: #5f7898;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.move-file-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.move-file-item {
+  margin-bottom: 10px;
+}
+
+.move-file-button {
+  width: 100%;
+  background-color: #dbeafe;
+  color: #2a3d66;
+  border: 2px solid #2a3d66;
+  border-radius: 8px;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.move-file-button:hover {
+  background-color: #b3d4fc;
+  transform: scale(1.03);
+}
+
+.move-file-button:active {
+  background-color: #96c3f3;
+  transform: scale(0.97);
+}
+
+/* Анимация появления */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
   
