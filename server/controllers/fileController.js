@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile } = require('../models/fileModel');
+const { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount } = require('../models/fileModel');
 const updateProject = async (project_id, filename, filepath, fileSize, fileExtension) => {
   await addFile(project_id, filename, filepath, fileSize, fileExtension);
 };
@@ -131,4 +131,15 @@ const replaceFileController = async (req, res) => {
     res.status(500).json({error: 'Ошибка при перемещении файла'})
   }
 }
-module.exports = { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController };
+
+const getCountFile = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const count = await getFileByIdCount(id);
+    res.json({ count });
+  } catch (error) {
+    console.error('Ошибка при получении количества файлов:', error);
+    res.status(500).json({ error: 'Ошибка при получении количества файлов' });
+  }
+};
+module.exports = { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController, getCountFile };
