@@ -22,7 +22,11 @@ input[type="file"] {
     outline: none;
     cursor: pointer;
 }
-
+.navigation-section{
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+}
 .butBack {
     background-color: #4CAF50;
     color: #fff;
@@ -44,4 +48,89 @@ input[type="file"] {
     margin-top: 20px;
 }
 
+.file-modal-overlay {
+    position: fixed;
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: rgba(0, 0, 0, 0.8); 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+  
+  .file-upload-modal {
+    background: #f5f5f5;
+    padding: 40px;
+    border-radius: 15px;
+    width: 420px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    text-align: center;
+  }
+  
+  .file-modal-title {
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+  
+  .file-modal-text {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 20px;
+  }
+  
+  .file-input {
+    border: 2px dashed #4CAF50;
+    width: 100%;
+    padding: 15px;
+    border-radius: 8px;
+    background: #f9f9f9;
+    cursor: pointer;
+    margin-bottom: 15px;
+  }
+  
+  .file-preview-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 20px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .file-preview-item {
+    background: #e3f2fd;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin-bottom: 5px;
+  }
+  
+  .file-upload-button {
+    background: #4CAF50;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+  }
+  
+  .file-upload-button:hover {
+    background: #45a049;
+  }
+  
+  .file-upload-modal-button {
+    background: #2196F3;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  .file-upload-modal-button:hover {
+    background: #1976D2;
+  }
+  
 

@@ -12,8 +12,18 @@ const UserFileList = () => {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState('');
   const [userId, setUserId] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [showModal, setShowModal] = useState(false);
 
   const navigate = useNavigate();
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    setSelectedFiles((prevFiles) => [...prevFiles, ...droppedFiles]);
+  };
+
+  const handleDragOver = (e) => e.preventDefault();
 
   const getUserIdFromToken = () => {
     const token = localStorage.getItem('token');
@@ -32,28 +42,31 @@ const UserFileList = () => {
   };
 
   const handleUpload = async () => {
-    if (!file) {
-      setMessage('Выберите файл для загрузки');
+    if (selectedFiles.length === 0) {
+      setMessage('Выберите файлы для загрузки');
       return;
     }
-  
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('projectId', projectId);
-    formData.append('fileSize', file.size);
-    formData.append('fileExtension', file.name.split('.').pop());
-  
+
     try {
-      const response = await axios.post('http://localhost:5000/files/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-  
-      setMessage(`Файл загружен: ${response.data.filename} (${response.data.fileSize} байт, ${response.data.fileExtension})`);
-      setFile(null);
-      fetchFiles(); // Обновляем список файлов после загрузки
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+        formData.append('fileSize', file.size);
+        formData.append('fileExtension', file.name.split('.').pop());
+
+        await axios.post('http://localhost:5000/files/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+
+      setMessage(`Успешно загружено ${selectedFiles.length} файл(ов)`);
+      setSelectedFiles([]);
+      fetchFiles();
+      setShowModal(false); // Закрываем модальное окно после загрузки
     } catch (error) {
       console.error('Ошибка при загрузке файла:', error);
-      setMessage('Ошибка при загрузке файла');
+      setMessage('Ошибка при загрузке файлов');
     }
   };
   
@@ -120,16 +133,40 @@ const UserFileList = () => {
   };
   return (
     <div className="container">
-      <div className="upload-section">
-        <h1>Загрузка файла</h1>
-        <input type="file" onChange={handleFileChange} />
-        <button onClick={handleUpload}>Загрузить</button>
-        {message && <p className="message">{message}</p>}
-      </div>
-
+      
+      {showModal && (
+        <div className="file-modal-overlay" onClick={() => setShowModal(false)}>
+          <div
+            className="file-upload-modal"
+            onClick={(e) => e.stopPropagation()}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+          >
+            <h2 className="file-modal-title">Загрузка файлов</h2>
+            <p className="file-modal-text">Перетащите файлы сюда или выберите их вручную</p>
+            <input
+              type="file"
+              multiple
+              onChange={handleFileChange}
+              className="file-input"
+            />
+            {selectedFiles.length > 0 && (
+              <ul className="file-preview-list">
+                {selectedFiles.map((file, index) => (
+                  <li key={index} className="file-preview-item">{file.name}</li>
+                ))}
+              </ul>
+            )}
+            <button className="file-upload-button" onClick={handleUpload}>Загрузить файлы</button>
+          </div>
+        </div>
+      )}
       <div className="navigation-section">
         <button className="back-button" onClick={() => navigate('/yourproject')}>
           Назад
+        </button>
+        <button className="file-upload-modal-button" onClick={() => setShowModal(true)}>
+          ➕ Загрузить файлы
         </button>
       </div>
 
