@@ -34,4 +34,8 @@ const deleteProjectFromDatabase = async (id) => {
   await con.execute(deleteSql, [id]);
 };
 
-module.exports = { projectList, addProject, deleteProjectFromDatabase, userProjectList };
+const updatedProject = async (name, description, projectId) => {
+  const sql = `UPDATE projects SET name = ?, description = ? WHERE id = ?`;
+  await con.execute(sql, [name, description, projectId])
+}
+module.exports = { projectList, addProject, deleteProjectFromDatabase, userProjectList, updatedProject };

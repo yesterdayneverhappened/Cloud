@@ -1,4 +1,4 @@
-const { projectList, addProject, deleteProjectFromDatabase, userProjectList } = require('../models/projectModel');
+const { projectList, addProject, deleteProjectFromDatabase, userProjectList, updatedProject } = require('../models/projectModel');
 
 const getProjects = async (req, res) => {
   try {
@@ -44,4 +44,15 @@ const deleteProject = async (req, res) => {
   }
 };
 
-module.exports = { getProjects, createProject, deleteProject, getUserProject };
+const updatedProject1 = async (req, res) => {
+  const { id } = req.params;
+  const { name, description } = req.body;
+
+  try {
+    await updatedProject(name, description, id);
+    res.status(200).json({ message: 'Проект успешно обновлён' });
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка при обновлении проекта', details: err });
+  }
+}
+module.exports = { getProjects, createProject, deleteProject, getUserProject, updatedProject1 };
