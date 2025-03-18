@@ -22,7 +22,18 @@ export default function File({ file, deleteFile, onOpenContextMenu, renameFile, 
       setIsMenuVisible(false);
     }
   };
-
+  const fileColors = {
+    'xls': 'green',
+    'xlsx': 'green',
+    'ppt': 'orange',
+    'pptx': 'orange',
+    'doc': 'blue',
+    'docx': 'blue',
+    'pdf': 'red',
+    'txt': 'gray',
+    'csv': 'purple'
+  };
+  const getFileBorderColor = (extension) => fileColors[extension.toLowerCase()] || 'black';
   useEffect(() => {
     document.addEventListener('click', handleClickOutside);
     return () => {
@@ -85,8 +96,15 @@ export default function File({ file, deleteFile, onOpenContextMenu, renameFile, 
     }
   }
   return (
-    <div className="file-card">
-      <div className="file-content">
+    <div className="file-card" style={{ border: `1px solid ${getFileBorderColor(file.file_extension)}` }}>
+      <div className="file-content"
+        style={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          maxWidth: '200px' // Установите максимальную ширину по необходимости
+        }}
+      >
         <strong>{file.filename}</strong>
       </div>
 

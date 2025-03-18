@@ -133,4 +133,17 @@ input[type="file"] {
     background: #1976D2;
   }
   
-
+  .filter-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .filter-section input,
+  .filter-section select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    width: 200px;
+  }
+  
