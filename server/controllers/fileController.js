@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq } = require('../models/fileModel');
+const { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile } = require('../models/fileModel');
 const updateProject = async (project_id, filename, filepath, fileSize, fileExtension) => {
   await addFile(project_id, filename, filepath, fileSize, fileExtension);
 };
@@ -118,4 +118,17 @@ const renameFile = async (req, res) => {
   }
 };
 
-module.exports = { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile };
+const replaceFileController = async (req, res) => {
+  const { id } = req.params
+  const { projectId } = req.body
+  console.log('ID из параметров:', id);
+  console.log('Новый проект файла:', projectId);
+  try{
+    await replaceFile(id, projectId)
+    res.json({message: 'Файл успешно перемещён в проект', projectId})
+  } catch (error) {
+    console.error('Ошибка перемещения файла', error);
+    res.status(500).json({error: 'Ошибка при перемещении файла'})
+  }
+}
+module.exports = { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController };

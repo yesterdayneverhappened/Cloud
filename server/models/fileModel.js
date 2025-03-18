@@ -36,10 +36,6 @@ const getFilesByProjectId = async (projectId) => {
   return results;
 };
 const renameFileq = async (id, newName, newPath) => {
-  console.log('newName:', newName);
-console.log('newPath:', newPath);
-console.log('id:', id);
-
   await con.execute('UPDATE files SET filename = ?, filepath = ? WHERE id = ?', [newName, newPath, id]);
 };
 const getFileById = async (fileId) => {
@@ -47,4 +43,7 @@ const getFileById = async (fileId) => {
   return fileData.length > 0 ? fileData[0] : null;
 };
 
-module.exports = { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq };
+const replaceFile = async (id, projectId) => {
+  await con.execute('UPDATE files SET project_id = ? WHERE id = ?', [projectId, id]);
+}
+module.exports = { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile };
