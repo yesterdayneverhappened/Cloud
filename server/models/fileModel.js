@@ -42,8 +42,11 @@ const getFileById = async (fileId) => {
   const [fileData] = await con.execute(`SELECT filepath FROM files WHERE id = ?`, [fileId]);
   return fileData.length > 0 ? fileData[0] : null;
 };
-
+const getFileByIdCount = async (projectId) => {
+  const [fileData] = await con.execute('SELECT COUNT(*) AS count FROM files WHERE project_id = ?', [projectId]);
+  return fileData;
+};
 const replaceFile = async (id, projectId) => {
   await con.execute('UPDATE files SET project_id = ? WHERE id = ?', [projectId, id]);
 }
-module.exports = { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile };
+module.exports = { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount };

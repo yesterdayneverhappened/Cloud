@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController } = require('../controllers/fileController');
+const { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController, getCountFile } = require('../controllers/fileController');
 
 const router = express.Router();
 
@@ -67,6 +67,7 @@ router.delete('/:id', deleteFile);
 router.get('/size/:projectId', getFilesWithSizes);
 
 router.get('/download/:id', downloadFile);
+router.get('/count/:id', getCountFile);
 router.put('/rename/:id', renameFile);
 router.put('/replace/:id', replaceFileController)
 

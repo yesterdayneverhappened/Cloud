@@ -17,12 +17,32 @@ class UserProjects extends Component {
       newProjectDescription: '',
       editingProject: null, // Для редактирования
       deletingProjectId: null, // Для удаления
+      deletingProjectFilesCount: 0,
     };
   }
 
   componentDidMount() {
     this.fetchUserProjects();
   }
+
+  fetchProjectFilesCount = async (projectId) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return;
+    }
+
+    try {
+      const response = await axios.get(`http://localhost:5000/files/count/${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      this.setState({
+        deletingProjectFilesCount: response.data.count[0].count,
+      });
+    } catch (error) {
+      console.error('Ошибка при получении количества файлов:', error);
+    }
+  };
+
 
   fetchUserProjects = async () => {
     const token = localStorage.getItem('token');
@@ -133,6 +153,7 @@ class UserProjects extends Component {
 
   openDeleteModal = (projectId) => {
     this.setState({ deletingProjectId: projectId, isDeleteModalOpen: true });
+    this.fetchProjectFilesCount(projectId);
   };
 
   closeDeleteModal = () => {
@@ -153,7 +174,7 @@ class UserProjects extends Component {
     }
   
     try {
-      await axios.delete(`http://localhost:5000/projects/${deletingProjectId}`, {
+      await axios.delete(`http://localhost:5000/projects/-delete${deletingProjectId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
   
@@ -223,6 +244,7 @@ class UserProjects extends Component {
           <div className="modal">
             <div className="modal-content">
               <h2>Вы уверены, что хотите удалить проект?</h2>
+              <p style={{ fontSize: '0.9rem' }}>При удалении проекта вы удалите ({this.state.deletingProjectFilesCount}) файлов</p>
               <div className="modal-actions">
                 <button onClick={this.handleDeleteProject}>Удалить</button>
                 <button onClick={this.closeDeleteModal}>Отмена</button>

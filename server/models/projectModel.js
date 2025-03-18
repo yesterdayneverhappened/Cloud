@@ -30,9 +30,34 @@ const addProject = async (name, description, userID) => {
 };
 
 const deleteProjectFromDatabase = async (id) => {
-  const deleteSql = `DELETE FROM projects WHERE id = ?`;
-  await con.execute(deleteSql, [id]);
+  const deleteFilesSql = 'DELETE FROM files WHERE project_id = ?';
+  const deleteProjectSql = 'DELETE FROM projects WHERE id = ?';
+  try {
+    console.log('Проверка соединения...');
+    const con2 = await con.getConnection(); 
+
+    console.log('Начало транзакции, проект id:', id);
+    await con2.beginTransaction(); // Начинаем транзакцию
+    console.log('Транзакция началась');
+
+    // Удаляем файлы
+    console.log('Удаление файлов, запрос:', deleteFilesSql);
+    const fileDeletionResult = await con2.execute(deleteFilesSql, [id]);
+    console.log('Результат удаления файлов:', fileDeletionResult);
+
+    // Удаляем проект
+    console.log('Удаление проекта, запрос:', deleteProjectSql);
+    await con2.execute(deleteProjectSql, [id]);
+    await con2.commit();
+  } catch (error) {
+    console.error('Ошибка при удалении проекта и файлов:', error);
+    if (con) {
+      await con.rollback(); // Откат транзакции в случае ошибки
+      console.log('Транзакция откатана');
+    }
+  }
 };
+
 
 const updatedProject = async (name, description, projectId) => {
   const sql = `UPDATE projects SET name = ?, description = ? WHERE id = ?`;
