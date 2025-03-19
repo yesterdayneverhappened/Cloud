@@ -3,8 +3,6 @@ import axios from 'axios';
 import { Link } from 'react-router-dom'; // Импортируем Link для создания ссылок
 import './ProjectList.css'; // Подключаем стили (создайте этот файл)
 
-import './ProjectList.css'; // Подключаем стили (создайте этот файл)
-
 class ProjectList extends Component {
   constructor(props) {
     super(props);
@@ -74,14 +72,15 @@ class ProjectList extends Component {
   };
 
   deleteProject = async (id) => {
-    try{
+    try {
       const response = await axios.delete(`http://localhost:5000/projects-delete/${id}`);
       console.log("Проект удалён");
-      this.fetchProjects()
+      this.fetchProjects();
     } catch (err) {
       console.error('Ошибка при удалении проекта:', err);
     }
-  }
+  };
+
   render() {
     const { projects, loading, isModalOpen, newProjectName, newProjectDescription } = this.state;
 
@@ -90,19 +89,22 @@ class ProjectList extends Component {
     }
 
     return (
-      <div>
-        <div>
-          <button onClick={this.openModal}>Добавить</button>
+      <div className="project-list-container">
+        <div className="add-project-button">
+          <button onClick={this.openModal}>Добавить проект</button>
         </div>
+
         <Link to='/charts'>
-          <button onClick={this.openCharts}>Диаграммы</button>
+          <button className="navigate-btn">Перейти к диаграммам</button>
         </Link>
+
         <h1>Список проектов</h1>
+
         <ul>
           {projects.length > 0 ? (
             projects.map((project) => (
-              <div>
-                <li key={project.id}>
+              <div key={project.id} className="project-item">
+                <li>
                   <strong>{project.name}</strong>
                   <br />
                   Описание: {project.description}
