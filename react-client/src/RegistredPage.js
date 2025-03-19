@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import './AuthPage.css';
+import { Link } from 'react-router-dom';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -29,6 +30,12 @@ export default function RegisterPage() {
           <input type="password" placeholder="Пароль" value={password} onChange={(e) => setPassword(e.target.value)} required className="auth-input" />
           <button type="submit" className="auth-button">Зарегистрироваться</button>
         </form>
+        <p className="auth-switch">
+         Вы уже зарегестрированы?{' '}
+          <Link to="/login" className="auth-switch-button">
+            Войти
+          </Link>
+        </p>
       </div>
     </div>
   );

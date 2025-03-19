@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom'; // Импортируем Link для создания ссылок
-import './ProjectList.css'; // Подключаем стили (создайте этот файл)
+import './ProjectList.css';
 
 class ProjectList extends Component {
   constructor(props) {
@@ -31,58 +30,24 @@ class ProjectList extends Component {
     }
   };
 
-  openModal = () => {
-    this.setState({ isModalOpen: true });
-  };
-
-  closeModal = () => {
-    this.setState({ isModalOpen: false, newProjectName: '', newProjectDescription: '' });
-  };
-
-  handleInputChange = (e) => {
-    const { name, value } = e.target;
-    this.setState({ [name]: value });
-  };
-
-  handleAddProject = async () => {
-    const { newProjectName, newProjectDescription } = this.state;
-
-    if (!newProjectName || !newProjectDescription) {
-      alert('Пожалуйста, заполните все поля');
-      return;
-    }
-
+  downloadLogFile = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/projects', {
-        name: newProjectName,
-        description: newProjectDescription,
+      const response = await axios.get('http://localhost:5000/files/download-log', {
+        responseType: 'blob',
       });
-
-      this.setState((prevState) => ({
-        projects: [...prevState.projects, response.data],
-        isModalOpen: false,
-        newProjectName: '',
-        newProjectDescription: '',
-      }));
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'log.txt');
+      document.body.appendChild(link);
+      link.click();
     } catch (error) {
-      console.error('Ошибка при добавлении проекта:', error);
-    }
-
-    this.fetchProjects();
-  };
-
-  deleteProject = async (id) => {
-    try {
-      const response = await axios.delete(`http://localhost:5000/projects-delete/${id}`);
-      console.log("Проект удалён");
-      this.fetchProjects();
-    } catch (err) {
-      console.error('Ошибка при удалении проекта:', err);
+      console.error('Ошибка при скачивании лог-файла:', error);
     }
   };
 
   render() {
-    const { projects, loading, isModalOpen, newProjectName, newProjectDescription } = this.state;
+    const { projects, loading } = this.state;
 
     if (loading) {
       return <p>Загрузка...</p>;
@@ -94,10 +59,6 @@ class ProjectList extends Component {
           <button onClick={this.openModal}>Добавить проект</button>
         </div>
 
-        <Link to='/charts'>
-          <button className="navigate-btn">Перейти к диаграммам</button>
-        </Link>
-
         <h1>Список проектов</h1>
 
         <ul>
@@ -108,10 +69,7 @@ class ProjectList extends Component {
                   <strong>{project.name}</strong>
                   <br />
                   Описание: {project.description}
-                  <br />
-                  <Link to={`/files/${project.id}`}>Перейти к файлам проекта</Link>
                 </li>
-                <button onClick={() => this.deleteProject(project.id)}>Удалить</button>
               </div>
             ))
           ) : (
@@ -119,30 +77,10 @@ class ProjectList extends Component {
           )}
         </ul>
 
-        {isModalOpen && (
-          <div className="modal">
-            <div className="modal-content">
-              <h2>Новый проект</h2>
-              <input
-                type="text"
-                name="newProjectName"
-                placeholder="Имя проекта"
-                value={newProjectName}
-                onChange={this.handleInputChange}
-              />
-              <textarea
-                name="newProjectDescription"
-                placeholder="Описание проекта"
-                value={newProjectDescription}
-                onChange={this.handleInputChange}
-              />
-              <div className="modal-actions">
-                <button onClick={this.handleAddProject}>Добавить</button>
-                <button onClick={this.closeModal}>Отмена</button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Кнопка для скачивания лог-файла */}
+        <div>
+          <button onClick={this.downloadLogFile}>Скачать лог-файл</button>
+        </div>
       </div>
     );
   }
