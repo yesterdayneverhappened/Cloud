@@ -34,4 +34,32 @@ const getUserByEmail = async (email) => {
   }
 };
 
-module.exports = { registerUser, getUserByEmail };
+const getActivityData = async (range) => {
+  let dateCondition = '';
+  switch (range) {
+      case '7d':
+          dateCondition = 'WHERE register_date >= NOW() - INTERVAL 7 DAY';
+          break;
+      case '30d':
+          dateCondition = 'WHERE register_date >= NOW() - INTERVAL 30 DAY';
+          break;
+      case '365d':
+          dateCondition = 'WHERE register_date >= NOW() - INTERVAL 365 DAY';
+          break;
+      default:
+          throw new Error('Некорректный временной диапазон');
+  }
+
+  const sql = `
+      SELECT DATE(register_date) AS date, COUNT(*) AS count
+      FROM clients
+      ${dateCondition}
+      GROUP BY DATE(register_date)
+      ORDER BY DATE(register_date) ASC;
+  `;
+
+  const [rows] = await con.execute(sql);
+  return rows;
+};
+
+module.exports = { registerUser, getUserByEmail, getActivityData };

@@ -1,96 +1,62 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement } from 'chart.js';
-import { Pie, Line, Bar } from 'react-chartjs-2';
+import { Line, Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
+import { useNavigate } from 'react-router-dom';
+import './ChartsPage.css'; // Подключаем CSS файл для стилизации
 
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement);
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement);
 
 const ProjectCharts = () => {
-  const { projectId } = useParams();
-  const [files, setFiles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [usersData, setUsersData] = useState([]);
+  const [storageData, setStorageData] = useState({ used: 0, total: 2 * 1024 }); // 2 ГБ в МБ
+  const [timeRange, setTimeRange] = useState('7d');
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchFilesWithSizes = async () => {
-      try {
-        const response = await axios.get(`http://localhost:5000/files/size/${projectId}`);
-        
-        if (response.status === 200) {
-          setFiles(response.data); // Устанавливаем файлы
-        } else {
-          console.error('Сервер вернул некорректный статус:', response.status);
-          setFiles([]); // На случай ошибки, устанавливаем пустой массив
-        }
-      } catch (error) {
-        console.error('Ошибка при получении данных о файлах:', error);
-        setFiles([]); // Устанавливаем пустой массив в случае ошибки
-      } finally {
-        setLoading(false); // Завершаем загрузку в любом случае
+  // Функции для получения данных
+  const fetchUsersData = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/users/activity?range=${timeRange}`);
+      setUsersData(response.data);
+    } catch (error) {
+      console.error('Ошибка при получении данных о пользователях:', error);
+    }
+  };
+
+  const fetchStorageData = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/files');
+      console.log('Данные с сервера:', response.data);
+
+      const totalSizeBytes = Number(response.data.totalSize); // Преобразование в число
+
+      if (isNaN(totalSizeBytes)) {
+        console.error('Ошибка: Неверный формат данных о хранилище:', response.data);
+        setStorageData({ used: 0, total: 2048 });
+        return;
       }
-    };
-  
-    fetchFilesWithSizes();
-  }, [projectId]);
-  
 
-  if (loading) {
-    return <p>Загрузка...</p>;
-  }
-
-  if (!files.length) {
-    return <p>Файлы не найдены для проекта {projectId}</p>;
-  }
-
-  // Круговая диаграмма: Распределение по типам файлов
-  const fileTypes = files.map((file) => file.filename.split('.').pop());
-  const uniqueTypes = [...new Set(fileTypes)];
-  const pieData = {
-    labels: uniqueTypes,
-    datasets: [
-      {
-        label: 'Распределение по типам файлов',
-        data: uniqueTypes.map((type) => fileTypes.filter((fileType) => fileType === type).length),
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.6)',
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 206, 86, 0.6)',
-          'rgba(75, 192, 192, 0.6)',
-          'rgba(153, 102, 255, 0.6)',
-        ],
-        borderColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-        ],
-        borderWidth: 1,
-      },
-    ],
+      const totalSizeMB = Math.round(totalSizeBytes / (1024 * 1024)); 
+      setStorageData({ used: totalSizeMB, total: 2048 }); 
+    } catch (error) {
+      console.error('Ошибка при получении данных о хранилище:', error);
+      setStorageData({ used: 0, total: 2048 });
+    }
   };
 
-  // Столбчатая диаграмма: Размеры файлов
-  const barData = {
-    labels: files.map((file) => file.filename),
-    datasets: [
-      {
-        label: 'Размер файла (в байтах)',
-        data: files.map((file) => file.size), // Используем размер из API
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
+  // useEffect для выполнения запросов при изменении временного диапазона
+  useEffect(() => {
+    fetchUsersData();
+    fetchStorageData();
+  }, [timeRange]);
 
-  // Линейная диаграмма: Условное накопление ID
+  // Данные для графиков
   const lineData = {
-    labels: files.map((file) => file.filename),
+    labels: usersData.map((entry) => entry.date),
     datasets: [
       {
-        label: 'ID файлов (нарастающим итогом)',
-        data: files.map((_, index) => index + 1),
+        label: 'Количество пользователей',
+        data: usersData.map((entry) => entry.count),
         fill: false,
         backgroundColor: 'rgba(54, 162, 235, 0.6)',
         borderColor: 'rgba(54, 162, 235, 1)',
@@ -99,19 +65,45 @@ const ProjectCharts = () => {
     ],
   };
 
+  const pieData = {
+    labels: [
+      `Использовано (${storageData.used} МБ)`, 
+      `Свободно (${storageData.total - storageData.used} МБ)`
+    ],
+    datasets: [
+      {
+        data: [storageData.used, storageData.total - storageData.used],
+        backgroundColor: ['rgba(255, 99, 132, 0.6)', 'rgba(75, 192, 192, 0.6)'],
+        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(75, 192, 192, 1)'],
+        borderWidth: 1,
+      },
+    ],
+  };
+
   return (
-    <div>
-      <div style={{ width: '400px', margin: '20px auto' }}>
-        <h2>Круговая диаграмма</h2>
-        <Pie data={pieData} />
+    <div className="charts-container">
+      <div className="button-container">
+        <button onClick={() => navigate('/projects')} className="navigate-button">
+          Перейти на главную
+        </button>
       </div>
-      <div style={{ width: '700px', margin: '20px auto' }}>
-        <h2>Столбчатая диаграмма</h2>
-        <Bar data={barData} />
+      <div className="header">
+        <label>Выберите временной диапазон: </label>
+        <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)} className="dropdown">
+          <option value="7d">Последние 7 дней</option>
+          <option value="30d">Последний месяц</option>
+          <option value="365d">Последний год</option>
+        </select>
       </div>
-      <div style={{ width: '700px', margin: '20px auto' }}>
-        <h2>Линейная диаграмма</h2>
+
+      <div className="chart-container">
+        <h2>Активность пользователей</h2>
         <Line data={lineData} />
+      </div>
+
+      <div className="chart-container">
+        <h2>Заполненность хранилища</h2>
+        <Pie data={pieData} />
       </div>
     </div>
   );

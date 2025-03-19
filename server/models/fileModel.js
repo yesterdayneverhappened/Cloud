@@ -49,4 +49,26 @@ const getFileByIdCount = async (projectId) => {
 const replaceFile = async (id, projectId) => {
   await con.execute('UPDATE files SET project_id = ? WHERE id = ?', [projectId, id]);
 }
-module.exports = { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount };
+
+const getAllFilesSize = async () => {
+  console.log('Функция `getAllFilesSize` вызвана');
+
+  const sql = `
+    SELECT IFNULL(SUM(file_size), 0) AS total_size
+    FROM files
+  `;
+
+  try {
+    const [rows] = await con.execute(sql);
+    const totalSize = rows[0]?.total_size || 0;
+
+    console.log('Результат запроса:', totalSize);
+    return totalSize;
+  } catch (err) {
+    console.error('Ошибка при выполнении SQL-запроса:', err);
+    throw new Error('Не удалось получить размер всех файлов.');
+  }
+};
+
+
+module.exports = { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize };

@@ -94,7 +94,9 @@ class ProjectList extends Component {
         <div>
           <button onClick={this.openModal}>Добавить</button>
         </div>
-
+        <Link to='/charts'>
+          <button onClick={this.openCharts}>Диаграммы</button>
+        </Link>
         <h1>Список проектов</h1>
         <ul>
           {projects.length > 0 ? (

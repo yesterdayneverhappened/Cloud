@@ -73,7 +73,6 @@ const FileList = () => {
 
   return (
     <div>
-      <ProjectCharts />
       <div>
         <h1>Загрузка файла</h1>
         <input type="file" onChange={handleFileChange} />

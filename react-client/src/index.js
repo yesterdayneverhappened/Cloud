@@ -9,6 +9,7 @@ import UserProjects from './UserProjectList';
 import './index.css'
 import UserFileList from './UserFileList';
 import FileList from './FileList';
+import ProjectCharts from './ChartsPage';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -19,6 +20,7 @@ root.render(
         <Route path="/" element={<AuthPage />} />
         <Route path="/projects" element={<ProjectList />} />
         <Route path="/files/:projectId" element={<FileList />} />
+        <Route path="/charts" element={<ProjectCharts />} />
         <Route path="/yourproject" element={<UserProjects />} />
         <Route path="/yourproject/:projectId" element={<UserFileList />} />
     </Routes>

@@ -1,12 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-const { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount } = require('../models/fileModel');
+const { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize } = require('../models/fileModel');
 const updateProject = async (project_id, filename, filepath, fileSize, fileExtension) => {
   await addFile(project_id, filename, filepath, fileSize, fileExtension);
 };
 
 const getFiles = async (req, res) => {
-  console.log('Маршрут вызван:', req.params.projectId);
   const { projectId } = req.params;
   try {
     const files = await fileList(projectId);
@@ -142,4 +141,24 @@ const getCountFile = async (req, res) => {
     res.status(500).json({ error: 'Ошибка при получении количества файлов' });
   }
 };
-module.exports = { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController, getCountFile };
+
+const getAllFilesSizeController = async (req, res) => {
+  try {
+      const totalSize = await getAllFilesSize();
+      console.log('Общий размер файлов на сервере (до преобразования):', totalSize);
+
+      const totalSizeNumber = Number(totalSize); // Преобразование в число
+
+      if (isNaN(totalSizeNumber)) {
+          console.error('Ошибка: Неверный формат данных о размере файлов.');
+          return res.status(500).json({ error: 'Ошибка при получении размера файлов' });
+      }
+
+      res.json({ totalSize: totalSizeNumber });
+  } catch (error) {
+      console.error('Ошибка при получении количества файлов:', error);
+      res.status(500).json({ error: 'Ошибка при получении количества файлов' });
+  }
+};
+
+module.exports = { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController, getCountFile, getAllFilesSizeController };

@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { registerUser, getUserByEmail } = require('../models/userModels');
+const { registerUser, getUserByEmail, getActivityData } = require('../models/userModels');
 
 const register = async (req, res) => {
     try {
@@ -47,5 +47,16 @@ const register = async (req, res) => {
     }
   };
   
+  const getUsersActivity = async (req, res) => {
+    const { range } = req.query;
 
-module.exports = { register, login };
+    try {
+        const activityData = await getActivityData(range);
+        res.json(activityData);
+    } catch (error) {
+        console.error('Ошибка при получении данных об активности пользователей:', error);
+        res.status(500).json({ error: 'Ошибка сервера при получении данных' });
+    }
+};
+
+module.exports = { register, login, getUsersActivity };
