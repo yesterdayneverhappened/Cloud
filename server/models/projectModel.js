@@ -7,11 +7,20 @@ const projectList = async () => {
       projects.name, 
       projects.description, 
       projects.created_at, 
-      clients.domain AS client_email
+      clients.domain AS client_email, 
+      SUM(f.file_size) AS total_size
     FROM 
       projects
     JOIN 
       clients ON projects.client_id = clients.id
+    LEFT JOIN 
+      files f ON projects.id = f.project_id
+    GROUP BY 
+      projects.id, 
+      projects.name, 
+      projects.description, 
+      projects.created_at, 
+      clients.domain
   `;
   try {
     const [rows] = await con.execute(sql);
@@ -20,6 +29,7 @@ const projectList = async () => {
     throw err;
   }
 };
+
 
 
 const userProjectList = async (clientId) => {

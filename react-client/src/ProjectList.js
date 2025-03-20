@@ -85,6 +85,14 @@ class ProjectList extends Component {
     this.setState({ filteredProjects });
   };
 
+  // Функция для конвертации байтов в мегабайты
+  bytesToMB = (bytes) => {
+    if (bytes === null || bytes === undefined) {
+      return 0;
+    }
+    return (bytes / (1024 * 1024)).toFixed(2); // Округляем до 2 знаков после запятой
+  };
+
   // Функция для создания и скачивания Excel файла
   exportToExcel = () => {
     const { filteredProjects } = this.state;
@@ -94,7 +102,7 @@ class ProjectList extends Component {
       "Client Name": project.client_name,
       "Client Email": project.client_email,
       "Project Name": project.name,
-      "Total Size (bytes)": project.total_size,
+      "Total Size (MB)": this.bytesToMB(project.total_size), // Используем конвертированное значение
       "Created At": new Date(project.created_at).toLocaleDateString(),
     }));
 
@@ -163,7 +171,7 @@ class ProjectList extends Component {
                   <p>{project.description}</p>
                   <p className="project-email">{project.client_email}</p>
                   <p className="project-date">Создано: {new Date(project.created_at).toLocaleDateString()}</p>
-                  <p className="project-size">Занимаемое место: {project.total_size} байт</p> {/* Добавил отображение размера */}
+                  <p className="project-size">Занимаемое место: {this.bytesToMB(project.total_size)} МБ</p> {/* Используем MB */}
                 </div>
               </div>
             ))
