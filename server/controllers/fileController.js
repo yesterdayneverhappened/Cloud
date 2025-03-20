@@ -144,10 +144,10 @@ const getCountFile = async (req, res) => {
 
 const getAllFilesSizeController = async (req, res) => {
   try {
-      const totalSize = await getAllFilesSize();
-      console.log('Общий размер файлов на сервере (до преобразования):', totalSize);
+      const fileSizes = await getAllFilesSize(); // Получаем массив данных
+      console.log('Общий размер файлов на сервере (до преобразования):', fileSizes);
 
-      const totalSizeNumber = Number(totalSize); // Преобразование в число
+      const totalSizeNumber = fileSizes.reduce((sum, file) => sum + Number(file.total_size), 0); // Суммируем размеры
 
       if (isNaN(totalSizeNumber)) {
           console.error('Ошибка: Неверный формат данных о размере файлов.');

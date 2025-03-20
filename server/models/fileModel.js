@@ -54,21 +54,29 @@ const getAllFilesSize = async () => {
   console.log('Функция `getAllFilesSize` вызвана');
 
   const sql = `
-    SELECT IFNULL(SUM(file_size), 0) AS total_size
+    SELECT IFNULL(file_extension, 'Без расширения') AS file_extension, 
+           IFNULL(SUM(file_size), 0) AS total_size
     FROM files
+    GROUP BY file_extension
   `;
 
   try {
     const [rows] = await con.execute(sql);
-    const totalSize = rows[0]?.total_size || 0;
 
-    console.log('Результат запроса:', totalSize);
-    return totalSize;
+    // Преобразование данных в числа перед логированием
+    const formattedData = rows.map(file => ({
+      file_extension: file.file_extension || 'Без расширения',
+      total_size: Number(file.total_size) || 0, // Здесь происходит корректное преобразование
+    }));
+
+    console.log('Результат запроса (после преобразования):', formattedData);
+    return formattedData;
   } catch (err) {
     console.error('Ошибка при выполнении SQL-запроса:', err);
     throw new Error('Не удалось получить размер всех файлов.');
   }
 };
+
 
 
 module.exports = { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize };

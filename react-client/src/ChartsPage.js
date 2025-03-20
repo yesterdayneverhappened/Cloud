@@ -11,6 +11,7 @@ const ProjectCharts = () => {
   const [usersData, setUsersData] = useState([]);
   const [storageData, setStorageData] = useState({ used: 0, total: 2 * 1024 }); // 2 ГБ в МБ
   const [timeRange, setTimeRange] = useState('7d');
+  const [fileTypeData, setFileTypeData] = useState([]);
   const navigate = useNavigate();
 
   // Функции для получения данных
@@ -27,22 +28,22 @@ const ProjectCharts = () => {
     try {
       const response = await axios.get('http://localhost:5000/files');
       console.log('Данные с сервера:', response.data);
-
-      const totalSizeBytes = Number(response.data.totalSize); // Преобразование в число
-
-      if (isNaN(totalSizeBytes)) {
-        console.error('Ошибка: Неверный формат данных о хранилище:', response.data);
+  
+      // Проверяем, что `response.data` содержит ключ `totalSize`
+      if (typeof response.data.totalSize !== 'number') {
+        console.error('Ошибка: Неверный формат данных о размере файлов.');
         setStorageData({ used: 0, total: 2048 });
         return;
       }
-
-      const totalSizeMB = Math.round(totalSizeBytes / (1024 * 1024)); 
-      setStorageData({ used: totalSizeMB, total: 2048 }); 
+  
+      const totalSizeMB = Math.round(response.data.totalSize / (1024 * 1024)); // Перевод в МБ
+      setStorageData({ used: totalSizeMB, total: 2048 });
     } catch (error) {
       console.error('Ошибка при получении данных о хранилище:', error);
       setStorageData({ used: 0, total: 2048 });
     }
   };
+  
 
   // useEffect для выполнения запросов при изменении временного диапазона
   useEffect(() => {
@@ -66,19 +67,21 @@ const ProjectCharts = () => {
   };
 
   const pieData = {
-    labels: [
-      `Использовано (${storageData.used} МБ)`, 
-      `Свободно (${storageData.total - storageData.used} МБ)`
-    ],
+    labels: fileTypeData.map(file => 
+      `${file.file_extension || 'Неизвестный'} (${(file.total_size / 1024 / 1024).toFixed(2)} МБ)`
+    ),
     datasets: [
       {
-        data: [storageData.used, storageData.total - storageData.used],
-        backgroundColor: ['rgba(255, 99, 132, 0.6)', 'rgba(75, 192, 192, 0.6)'],
-        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(75, 192, 192, 1)'],
+        data: fileTypeData.map(file => file.total_size),
+        backgroundColor: [
+          '#FF6384', '#36A2EB', '#FFCE56', '#4CAF50', '#8A2BE2', '#FFA500', '#FF4500'
+        ],
+        borderColor: '#fff',
         borderWidth: 1,
       },
     ],
   };
+  
 
   return (
     <div className="charts-container">
