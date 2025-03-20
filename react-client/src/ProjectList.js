@@ -7,10 +7,11 @@ class ProjectList extends Component {
     super(props);
     this.state = {
       projects: [],
+      filteredProjects: [],
       loading: true,
-      isModalOpen: false,
-      newProjectName: '',
-      newProjectDescription: '',
+      searchTerm: '',
+      searchByEmail: '',
+      sortType: '',
     };
   }
 
@@ -23,6 +24,7 @@ class ProjectList extends Component {
       const response = await axios.get('http://localhost:5000/projects');
       this.setState({
         projects: response.data,
+        filteredProjects: response.data,
         loading: false,
       });
     } catch (error) {
@@ -30,24 +32,61 @@ class ProjectList extends Component {
     }
   };
 
-  downloadLogFile = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/files/download-log', {
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'log.txt');
-      document.body.appendChild(link);
-      link.click();
-    } catch (error) {
-      console.error('Ошибка при скачивании лог-файла:', error);
+  handleSearch = (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    this.setState({ searchTerm }, this.filterProjects);
+  };
+
+  handleSearchByEmail = (e) => {
+    const searchByEmail = e.target.value.toLowerCase();
+    this.setState({ searchByEmail }, this.filterProjects);
+  };
+
+  handleSortChange = (e) => {
+    this.setState({ sortType: e.target.value }, this.filterProjects);
+  };
+
+  filterProjects = () => {
+    const { projects, searchTerm, searchByEmail, sortType } = this.state;
+    let filteredProjects = [...projects];
+
+    // Фильтр по названию проекта
+    if (searchTerm) {
+      filteredProjects = filteredProjects.filter((project) =>
+        project.name.toLowerCase().includes(searchTerm)
+      );
     }
+
+    // Фильтр по почте
+    if (searchByEmail) {
+      filteredProjects = filteredProjects.filter((project) =>
+        project.client_email.toLowerCase().includes(searchByEmail)
+      );
+    }
+
+    // Сортировка
+    switch (sortType) {
+      case 'nameAsc':
+        filteredProjects.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'nameDesc':
+        filteredProjects.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case 'dateAsc':
+        filteredProjects.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        break;
+      case 'dateDesc':
+        filteredProjects.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        break;
+      default:
+        break;
+    }
+
+    this.setState({ filteredProjects });
   };
 
   render() {
-    const { projects, loading } = this.state;
+    const { filteredProjects, loading, searchTerm, searchByEmail, sortType } = this.state;
 
     if (loading) {
       return <p>Загрузка...</p>;
@@ -55,29 +94,55 @@ class ProjectList extends Component {
 
     return (
       <div className="project-list-container">
-        <div className="add-project-button">
-          <button onClick={this.openModal}>Добавить проект</button>
+        {/* Фильтры */}
+        <div className="filter-section">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={this.handleSearch}
+            placeholder="Поиск по названию проекта..."
+            className="search-input"
+          />
+
+          <input
+            type="text"
+            value={searchByEmail}
+            onChange={this.handleSearchByEmail}
+            placeholder="Поиск по почте клиента..."
+            className="search-input"
+          />
+
+          <select
+            value={sortType}
+            onChange={this.handleSortChange}
+            className="sort-select"
+          >
+            <option value="">Сортировка</option>
+            <option value="nameAsc">По имени (A-Z)</option>
+            <option value="nameDesc">По имени (Z-A)</option>
+            <option value="dateAsc">По дате (старые сначала)</option>
+            <option value="dateDesc">По дате (новые сначала)</option>
+          </select>
         </div>
 
-        <h1>Список проектов</h1>
-
-        <ul>
-          {projects.length > 0 ? (
-            projects.map((project) => (
+        {/* Список проектов */}
+        <div className="project-list">
+          {filteredProjects.length > 0 ? (
+            filteredProjects.map((project) => (
               <div key={project.id} className="project-item">
-                <li>
-                  <strong>{project.name}</strong>
-                  <br />
-                  Описание: {project.description}
-                </li>
+                <div className="project-card">
+                  <h2>{project.name}</h2>
+                  <p>{project.description}</p>
+                  <p className="project-email">{project.client_email}</p>
+                  <p className="project-date">Создано: {new Date(project.created_at).toLocaleDateString()}</p>
+                </div>
               </div>
             ))
           ) : (
             <p>Проекты не найдены</p>
           )}
-        </ul>
+        </div>
 
-        {/* Кнопка для скачивания лог-файла */}
         <div>
           <button onClick={this.downloadLogFile}>Скачать лог-файл</button>
         </div>

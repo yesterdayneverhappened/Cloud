@@ -156,3 +156,122 @@ button.navigate-btn {
 button.navigate-btn:hover {
   background-color: #303f9f;
 }
+/* ProjectList.css */
+
+/* Стили для контейнера поиска */
+.search-container {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.search-input {
+  width: 80%;
+  max-width: 500px;
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Контейнер для списка проектов */
+.project-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+/* Стили для отдельного проекта (карточка) */
+.project-item {
+  width: 250px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.project-item:hover {
+  transform: scale(1.05);
+}
+
+.project-card {
+  text-align: center;
+}
+
+.project-card h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.project-card p {
+  font-size: 14px;
+  color: #555;
+}
+
+/* Стили для кнопки добавления проекта */
+.add-project-button {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.add-project-button button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  background-color: #4caf50;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-project-button button:hover {
+  background-color: #45a049;
+}
+.project-list-container {
+  padding: 20px;
+}
+
+.filter-section {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.search-input, .sort-select {
+  padding: 8px 12px;
+  width: 200px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.project-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px;
+}
+
+.project-item {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.project-card h2 {
+  margin: 0 0 10px 0;
+}
+
+.project-email {
+  color: #555;
+  font-style: italic;
+  margin-top: 5px;
+}
+
+.project-date {
+  color: #888;
+  font-size: 12px;
+  margin-top: 5px;
+}

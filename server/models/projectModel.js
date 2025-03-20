@@ -1,7 +1,18 @@
 const con = require('../config/db');
 
 const projectList = async () => {
-  const sql = "SELECT * FROM projects";
+  const sql = `
+    SELECT 
+      projects.id, 
+      projects.name, 
+      projects.description, 
+      projects.created_at, 
+      clients.domain AS client_email
+    FROM 
+      projects
+    JOIN 
+      clients ON projects.client_id = clients.id
+  `;
   try {
     const [rows] = await con.execute(sql);
     return rows;
@@ -9,6 +20,7 @@ const projectList = async () => {
     throw err;
   }
 };
+
 
 const userProjectList = async (clientId) => {
   const sql = "SELECT * FROM projects WHERE client_id = ?";
