@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import './ProjectList.css';
+import { Link } from 'react-router-dom';
 
 class ProjectList extends Component {
   constructor(props) {
@@ -123,6 +124,11 @@ class ProjectList extends Component {
             <option value="dateAsc">По дате (старые сначала)</option>
             <option value="dateDesc">По дате (новые сначала)</option>
           </select>
+          <Link to={`/charts`}>
+            <button>
+              Диаграммы
+            </button>
+          </Link>
         </div>
 
         {/* Список проектов */}
