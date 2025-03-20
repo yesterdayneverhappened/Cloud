@@ -146,9 +146,7 @@ class ProjectList extends Component {
             <option value="dateDesc">По дате (новые сначала)</option>
           </select>
           <Link to={`/charts`}>
-            <button>
-              Диаграммы
-            </button>
+            <button>Диаграммы</button>
           </Link>
           <div>
             <button onClick={this.exportToExcel}>Скачать отчет в Excel</button>
@@ -165,6 +163,7 @@ class ProjectList extends Component {
                   <p>{project.description}</p>
                   <p className="project-email">{project.client_email}</p>
                   <p className="project-date">Создано: {new Date(project.created_at).toLocaleDateString()}</p>
+                  <p className="project-size">Занимаемое место: {project.total_size} байт</p> {/* Добавил отображение размера */}
                 </div>
               </div>
             ))
