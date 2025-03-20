@@ -144,21 +144,31 @@ const getCountFile = async (req, res) => {
 
 const getAllFilesSizeController = async (req, res) => {
   try {
-      const fileSizes = await getAllFilesSize(); // Получаем массив данных
-      console.log('Общий размер файлов на сервере (до преобразования):', fileSizes);
+    const fileSizes = await getAllFilesSize(); // Получаем массив данных
+    console.log('Общий размер файлов на сервере (до преобразования):', fileSizes);
 
-      const totalSizeNumber = fileSizes.reduce((sum, file) => sum + Number(file.total_size), 0); // Суммируем размеры
+    // Преобразуем данные
+    const formattedFileSizes = fileSizes.map(file => ({
+      file_extension: file.file_extension || 'Без расширения',
+      total_size: Number(file.total_size) || 0, // Преобразуем в число
+    }));
 
-      if (isNaN(totalSizeNumber)) {
-          console.error('Ошибка: Неверный формат данных о размере файлов.');
-          return res.status(500).json({ error: 'Ошибка при получении размера файлов' });
-      }
+    console.log('Форматированные данные:', formattedFileSizes);
 
-      res.json({ totalSize: totalSizeNumber });
+    const totalSizeNumber = formattedFileSizes.reduce((sum, file) => sum + Number(file.total_size), 0); // Суммируем размеры
+
+    if (isNaN(totalSizeNumber)) {
+      console.error('Ошибка: Неверный формат данных о размере файлов.');
+      return res.status(500).json({ error: 'Ошибка при получении размера файлов' });
+    }
+
+    res.json(formattedFileSizes); // Возвращаем форматированные данные
   } catch (error) {
-      console.error('Ошибка при получении количества файлов:', error);
-      res.status(500).json({ error: 'Ошибка при получении количества файлов' });
+    console.error('Ошибка при получении количества файлов:', error);
+    res.status(500).json({ error: 'Ошибка при получении количества файлов' });
   }
 };
+
+
 
 module.exports = { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController, getCountFile, getAllFilesSizeController };

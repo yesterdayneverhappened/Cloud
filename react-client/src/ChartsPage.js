@@ -14,7 +14,35 @@ const ProjectCharts = () => {
   const [fileTypeData, setFileTypeData] = useState([]);
   const navigate = useNavigate();
 
-  // Функции для получения данных
+  // Функция для получения данных о типах файлов
+ // Функция для получения данных о типах файлов
+ const fetchFileTypeData = async () => {
+  try {
+    const response = await axios.get('http://localhost:5000/files');
+    console.log('Данные о типах файлов:', response.data);
+
+    if (Array.isArray(response.data)) {
+      const isValidData = response.data.every(file => 
+        file.hasOwnProperty('file_extension') && typeof file.file_extension === 'string' &&
+        file.hasOwnProperty('total_size') && typeof file.total_size === 'number'
+      );
+
+      if (isValidData) {
+        setFileTypeData(response.data); // Обновляем состояние с типами файлов
+      } else {
+        console.error('Ошибка: Неверный формат данных о типах файлов.');
+        setFileTypeData([]); // Если формат неверный, очищаем данные
+      }
+    } else {
+      console.error('Ошибка: Ответ не является массивом.', response.data);
+      setFileTypeData([]);
+    }
+  } catch (error) {
+    console.error('Ошибка при получении данных о типах файлов:', error);
+  }
+};
+
+  // Функции для получения других данных
   const fetchUsersData = async () => {
     try {
       const response = await axios.get(`http://localhost:5000/api/users/activity?range=${timeRange}`);
@@ -29,7 +57,6 @@ const ProjectCharts = () => {
       const response = await axios.get('http://localhost:5000/files');
       console.log('Данные с сервера:', response.data);
   
-      // Проверяем, что `response.data` содержит ключ `totalSize`
       if (typeof response.data.totalSize !== 'number') {
         console.error('Ошибка: Неверный формат данных о размере файлов.');
         setStorageData({ used: 0, total: 2048 });
@@ -43,12 +70,12 @@ const ProjectCharts = () => {
       setStorageData({ used: 0, total: 2048 });
     }
   };
-  
 
   // useEffect для выполнения запросов при изменении временного диапазона
   useEffect(() => {
     fetchUsersData();
     fetchStorageData();
+    fetchFileTypeData();  // Добавим вызов fetchFileTypeData
   }, [timeRange]);
 
   // Данные для графиков
@@ -68,7 +95,7 @@ const ProjectCharts = () => {
 
   const pieData = {
     labels: fileTypeData.map(file => 
-      `${file.file_extension || 'Неизвестный'} (${(file.total_size / 1024 / 1024).toFixed(2)} МБ)`
+      `${file.file_extension || 'Без расширения'} (${(file.total_size / 1024 / 1024).toFixed(2)} МБ)`
     ),
     datasets: [
       {
@@ -81,8 +108,6 @@ const ProjectCharts = () => {
       },
     ],
   };
-  
-
   return (
     <div className="charts-container">
       <div className="button-container">
@@ -105,7 +130,7 @@ const ProjectCharts = () => {
       </div>
 
       <div className="chart-container">
-        <h2>Заполненность хранилища</h2>
+        <h2>Типы файлов по размеру</h2>
         <Pie data={pieData} />
       </div>
     </div>

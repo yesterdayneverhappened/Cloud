@@ -63,10 +63,9 @@ const getAllFilesSize = async () => {
   try {
     const [rows] = await con.execute(sql);
 
-    // Преобразование данных в числа перед логированием
     const formattedData = rows.map(file => ({
       file_extension: file.file_extension || 'Без расширения',
-      total_size: Number(file.total_size) || 0, // Здесь происходит корректное преобразование
+      total_size: Number(file.total_size) || 0,
     }));
 
     console.log('Результат запроса (после преобразования):', formattedData);
@@ -76,7 +75,5 @@ const getAllFilesSize = async () => {
     throw new Error('Не удалось получить размер всех файлов.');
   }
 };
-
-
 
 module.exports = { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize };
