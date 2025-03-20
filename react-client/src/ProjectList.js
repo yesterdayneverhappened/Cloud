@@ -1,19 +1,18 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom'; // Импортируем Link для создания ссылок
-import './ProjectList.css'; // Подключаем стили (создайте этот файл)
-
-import './ProjectList.css'; // Подключаем стили (создайте этот файл)
+import './ProjectList.css';
+import { Link } from 'react-router-dom';
 
 class ProjectList extends Component {
   constructor(props) {
     super(props);
     this.state = {
       projects: [],
+      filteredProjects: [],
       loading: true,
-      isModalOpen: false,
-      newProjectName: '',
-      newProjectDescription: '',
+      searchTerm: '',
+      searchByEmail: '',
+      sortType: '',
     };
   }
 
@@ -26,6 +25,7 @@ class ProjectList extends Component {
       const response = await axios.get('http://localhost:5000/projects');
       this.setState({
         projects: response.data,
+        filteredProjects: response.data,
         loading: false,
       });
     } catch (error) {
@@ -33,112 +33,125 @@ class ProjectList extends Component {
     }
   };
 
-  openModal = () => {
-    this.setState({ isModalOpen: true });
+  handleSearch = (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    this.setState({ searchTerm }, this.filterProjects);
   };
 
-  closeModal = () => {
-    this.setState({ isModalOpen: false, newProjectName: '', newProjectDescription: '' });
+  handleSearchByEmail = (e) => {
+    const searchByEmail = e.target.value.toLowerCase();
+    this.setState({ searchByEmail }, this.filterProjects);
   };
 
-  handleInputChange = (e) => {
-    const { name, value } = e.target;
-    this.setState({ [name]: value });
+  handleSortChange = (e) => {
+    this.setState({ sortType: e.target.value }, this.filterProjects);
   };
 
-  handleAddProject = async () => {
-    const { newProjectName, newProjectDescription } = this.state;
+  filterProjects = () => {
+    const { projects, searchTerm, searchByEmail, sortType } = this.state;
+    let filteredProjects = [...projects];
 
-    if (!newProjectName || !newProjectDescription) {
-      alert('Пожалуйста, заполните все поля');
-      return;
+    // Фильтр по названию проекта
+    if (searchTerm) {
+      filteredProjects = filteredProjects.filter((project) =>
+        project.name.toLowerCase().includes(searchTerm)
+      );
     }
 
-    try {
-      const response = await axios.post('http://localhost:5000/projects', {
-        name: newProjectName,
-        description: newProjectDescription,
-      });
-
-      this.setState((prevState) => ({
-        projects: [...prevState.projects, response.data],
-        isModalOpen: false,
-        newProjectName: '',
-        newProjectDescription: '',
-      }));
-    } catch (error) {
-      console.error('Ошибка при добавлении проекта:', error);
+    // Фильтр по почте
+    if (searchByEmail) {
+      filteredProjects = filteredProjects.filter((project) =>
+        project.client_email.toLowerCase().includes(searchByEmail)
+      );
     }
 
-    this.fetchProjects();
+    // Сортировка
+    switch (sortType) {
+      case 'nameAsc':
+        filteredProjects.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'nameDesc':
+        filteredProjects.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case 'dateAsc':
+        filteredProjects.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        break;
+      case 'dateDesc':
+        filteredProjects.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        break;
+      default:
+        break;
+    }
+
+    this.setState({ filteredProjects });
   };
 
-  deleteProject = async (id) => {
-    try{
-      const response = await axios.delete(`http://localhost:5000/projects-delete/${id}`);
-      console.log("Проект удалён");
-      this.fetchProjects()
-    } catch (err) {
-      console.error('Ошибка при удалении проекта:', err);
-    }
-  }
   render() {
-    const { projects, loading, isModalOpen, newProjectName, newProjectDescription } = this.state;
+    const { filteredProjects, loading, searchTerm, searchByEmail, sortType } = this.state;
 
     if (loading) {
       return <p>Загрузка...</p>;
     }
 
     return (
-      <div>
-        <div>
-          <button onClick={this.openModal}>Добавить</button>
+      <div className="project-list-container">
+        {/* Фильтры */}
+        <div className="filter-section">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={this.handleSearch}
+            placeholder="Поиск по названию проекта..."
+            className="search-input"
+          />
+
+          <input
+            type="text"
+            value={searchByEmail}
+            onChange={this.handleSearchByEmail}
+            placeholder="Поиск по почте клиента..."
+            className="search-input"
+          />
+
+          <select
+            value={sortType}
+            onChange={this.handleSortChange}
+            className="sort-select"
+          >
+            <option value="">Сортировка</option>
+            <option value="nameAsc">По имени (A-Z)</option>
+            <option value="nameDesc">По имени (Z-A)</option>
+            <option value="dateAsc">По дате (старые сначала)</option>
+            <option value="dateDesc">По дате (новые сначала)</option>
+          </select>
+          <Link to={`/charts`}>
+            <button>
+              Диаграммы
+            </button>
+          </Link>
         </div>
 
-        <h1>Список проектов</h1>
-        <ul>
-          {projects.length > 0 ? (
-            projects.map((project) => (
-              <div>
-                <li key={project.id}>
-                  <strong>{project.name}</strong>
-                  <br />
-                  Описание: {project.description}
-                  <br />
-                  <Link to={`/files/${project.id}`}>Перейти к файлам проекта</Link>
-                </li>
-                <button onClick={() => this.deleteProject(project.id)}>Удалить</button>
+        {/* Список проектов */}
+        <div className="project-list">
+          {filteredProjects.length > 0 ? (
+            filteredProjects.map((project) => (
+              <div key={project.id} className="project-item">
+                <div className="project-card">
+                  <h2>{project.name}</h2>
+                  <p>{project.description}</p>
+                  <p className="project-email">{project.client_email}</p>
+                  <p className="project-date">Создано: {new Date(project.created_at).toLocaleDateString()}</p>
+                </div>
               </div>
             ))
           ) : (
             <p>Проекты не найдены</p>
           )}
-        </ul>
+        </div>
 
-        {isModalOpen && (
-          <div className="modal">
-            <div className="modal-content">
-              <h2>Новый проект</h2>
-              <input
-                type="text"
-                name="newProjectName"
-                placeholder="Имя проекта"
-                value={newProjectName}
-                onChange={this.handleInputChange}
-              />
-              <textarea
-                name="newProjectDescription"
-                placeholder="Описание проекта"
-                value={newProjectDescription}
-                onChange={this.handleInputChange}
-              />
-              <div className="modal-actions">
-                <button onClick={this.handleAddProject}>Добавить</button>
-                <button onClick={this.closeModal}>Отмена</button>
-              </div>
-            </div>
-          </div>
-        )}
+        <div>
+          <button onClick={this.downloadLogFile}>Скачать лог-файл</button>
+        </div>
       </div>
     );
   }

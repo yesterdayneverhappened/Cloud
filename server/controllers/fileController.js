@@ -1,12 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-const { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount } = require('../models/fileModel');
+const { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize } = require('../models/fileModel');
 const updateProject = async (project_id, filename, filepath, fileSize, fileExtension) => {
   await addFile(project_id, filename, filepath, fileSize, fileExtension);
 };
 
 const getFiles = async (req, res) => {
-  console.log('Маршрут вызван:', req.params.projectId);
   const { projectId } = req.params;
   try {
     const files = await fileList(projectId);
@@ -142,4 +141,34 @@ const getCountFile = async (req, res) => {
     res.status(500).json({ error: 'Ошибка при получении количества файлов' });
   }
 };
-module.exports = { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController, getCountFile };
+
+const getAllFilesSizeController = async (req, res) => {
+  try {
+    const fileSizes = await getAllFilesSize(); // Получаем массив данных
+    console.log('Общий размер файлов на сервере (до преобразования):', fileSizes);
+
+    // Преобразуем данные
+    const formattedFileSizes = fileSizes.map(file => ({
+      file_extension: file.file_extension || 'Без расширения',
+      total_size: Number(file.total_size) || 0, // Преобразуем в число
+    }));
+
+    console.log('Форматированные данные:', formattedFileSizes);
+
+    const totalSizeNumber = formattedFileSizes.reduce((sum, file) => sum + Number(file.total_size), 0); // Суммируем размеры
+
+    if (isNaN(totalSizeNumber)) {
+      console.error('Ошибка: Неверный формат данных о размере файлов.');
+      return res.status(500).json({ error: 'Ошибка при получении размера файлов' });
+    }
+
+    res.json(formattedFileSizes); // Возвращаем форматированные данные
+  } catch (error) {
+    console.error('Ошибка при получении количества файлов:', error);
+    res.status(500).json({ error: 'Ошибка при получении количества файлов' });
+  }
+};
+
+
+
+module.exports = { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController, getCountFile, getAllFilesSizeController };

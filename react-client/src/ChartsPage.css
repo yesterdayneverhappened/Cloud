@@ -1,0 +1,48 @@
+/* Основной контейнер для страницы */
+.charts-container {
+    width: 80%;
+    margin: 0 auto;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  
+  /* Заголовки графиков */
+  h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  /* Контейнеры для графиков */
+  .chart-container {
+    width: 70%;
+    margin: 20px auto;
+  }
+  
+  /* Выпадающий список */
+  .dropdown {
+    margin-left: 10px;
+    padding: 5px 10px;
+    font-size: 16px;
+  }
+  
+  /* Кнопка перехода */
+  .button-container {
+    margin: 30px;
+  }
+  
+  .navigate-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .navigate-button:hover {
+    background-color: #45a049;
+  }
+  
