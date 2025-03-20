@@ -62,4 +62,30 @@ const getActivityData = async (range) => {
   return rows;
 };
 
-module.exports = { registerUser, getUserByEmail, getActivityData };
+const getProjectReport = async () => {
+  const query = `
+    SELECT 
+        c.name AS client_name,
+        c.domain AS client_email, 
+        p.name AS project_name,
+        SUM(f.file_size) AS total_size
+    FROM 
+        clients c
+    JOIN 
+        projects p ON c.id = p.client_id
+    JOIN 
+        files f ON p.id = f.project_id
+    GROUP BY 
+        c.id, p.id;
+  `;
+  
+  try {
+    const [rows] = await con.execute(query);
+    return rows;
+  } catch (error) {
+    console.error('Ошибка при получении отчета:', error);
+    throw error;
+  }
+};
+
+module.exports = { registerUser, getUserByEmail, getActivityData, getProjectReport };

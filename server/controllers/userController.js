@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { registerUser, getUserByEmail, getActivityData } = require('../models/userModels');
+const { registerUser, getUserByEmail, getActivityData, getProjectReport } = require('../models/userModels');
 
 const register = async (req, res) => {
     try {
@@ -58,5 +58,15 @@ const register = async (req, res) => {
         res.status(500).json({ error: 'Ошибка сервера при получении данных' });
     }
 };
+const exportLogFile = async (req, res) => {
+  try {
+    const reportData = await getProjectReport();
 
-module.exports = { register, login, getUsersActivity };
+    // Отправляем данные в формате JSON
+    res.json(reportData);
+  } catch (error) {
+    console.error('Ошибка при получении данных для отчета:', error);
+    res.status(500).json({ error: 'Ошибка при получении данных для отчета' });
+  }
+};
+module.exports = { register, login, getUsersActivity, exportLogFile };
