@@ -86,6 +86,9 @@ button:focus {
   height: 100px;
 }
 
+body{
+  padding: 0;
+}
 .modal-actions {
   display: flex;
   justify-content: space-between;
@@ -235,6 +238,11 @@ button.navigate-btn:hover {
   display: flex;
   gap: 15px;
   margin-bottom: 20px;
+  position: fixed;
+  top: 0;
+  background-color: #33333331;
+  width: 100%;
+  padding: 20px;
 }
 
 .search-input, .sort-select {
@@ -248,6 +256,7 @@ button.navigate-btn:hover {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 15px;
+  margin-top: 90px;
 }
 
 .project-item {
@@ -272,4 +281,7 @@ button.navigate-btn:hover {
   color: #888;
   font-size: 12px;
   margin-top: 5px;
+}
+.project-list-container{
+  padding: 0;
 }
