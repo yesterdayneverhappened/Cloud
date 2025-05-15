@@ -187,7 +187,11 @@ class UserProjects extends Component {
       console.error('Ошибка при удалении проекта:', error);
     }
   };
-
+  handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login'; // или используй history.push если ты используешь React Router v5
+  };
+  
   render() {
     const { projects, loading, isModalOpen, isDeleteModalOpen, newProjectName, newProjectDescription, editingProject } = this.state;
 
@@ -199,6 +203,7 @@ class UserProjects extends Component {
       <div className="user-projects-container">
         <h1>Ваши проекты</h1>
         <button className="add-button" onClick={this.openModal}>Добавить проект</button>
+        <button className="logout-button" onClick={this.handleLogout}>Выйти</button>
         <div className="project-list">
           {projects.length > 0 ? (
             projects.map((project) => (

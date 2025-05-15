@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import './ProjectList.css';
 import { Link } from 'react-router-dom';
+import * as XLSX from 'xlsx';  // Импортируем библиотеку для работы с Excel
 
 class ProjectList extends Component {
   constructor(props) {
@@ -51,14 +52,12 @@ class ProjectList extends Component {
     const { projects, searchTerm, searchByEmail, sortType } = this.state;
     let filteredProjects = [...projects];
 
-    // Фильтр по названию проекта
+    // Фильтры
     if (searchTerm) {
       filteredProjects = filteredProjects.filter((project) =>
         project.name.toLowerCase().includes(searchTerm)
       );
     }
-
-    // Фильтр по почте
     if (searchByEmail) {
       filteredProjects = filteredProjects.filter((project) =>
         project.client_email.toLowerCase().includes(searchByEmail)
@@ -84,6 +83,36 @@ class ProjectList extends Component {
     }
 
     this.setState({ filteredProjects });
+  };
+
+  // Функция для конвертации байтов в мегабайты
+  bytesToMB = (bytes) => {
+    if (bytes === null || bytes === undefined) {
+      return 0;
+    }
+    return (bytes / (1024 * 1024)).toFixed(2); // Округляем до 2 знаков после запятой
+  };
+
+  // Функция для создания и скачивания Excel файла
+  exportToExcel = () => {
+    const { filteredProjects } = this.state;
+
+    // Преобразуем данные в формат для таблицы Excel
+    const data = filteredProjects.map(project => ({
+      "Client Name": project.client_name,
+      "Client Email": project.client_email,
+      "Project Name": project.name,
+      "Total Size (MB)": this.bytesToMB(project.total_size), // Используем конвертированное значение
+      "Created At": new Date(project.created_at).toLocaleDateString(),
+    }));
+
+    // Создание таблицы Excel
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Project Report');
+
+    // Генерация файла и скачивание
+    XLSX.writeFile(wb, 'project_report.xlsx');
   };
 
   render() {
@@ -125,10 +154,11 @@ class ProjectList extends Component {
             <option value="dateDesc">По дате (новые сначала)</option>
           </select>
           <Link to={`/charts`}>
-            <button>
-              Диаграммы
-            </button>
+            <button>Диаграммы</button>
           </Link>
+          <div>
+            <button onClick={this.exportToExcel}>Скачать отчет в Excel</button>
+          </div>
         </div>
 
         {/* Список проектов */}
@@ -141,16 +171,13 @@ class ProjectList extends Component {
                   <p>{project.description}</p>
                   <p className="project-email">{project.client_email}</p>
                   <p className="project-date">Создано: {new Date(project.created_at).toLocaleDateString()}</p>
+                  <p className="project-size">Занимаемое место: {this.bytesToMB(project.total_size)} МБ</p> {/* Используем MB */}
                 </div>
               </div>
             ))
           ) : (
             <p>Проекты не найдены</p>
           )}
-        </div>
-
-        <div>
-          <button onClick={this.downloadLogFile}>Скачать лог-файл</button>
         </div>
       </div>
     );
