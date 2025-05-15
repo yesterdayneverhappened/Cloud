@@ -59,7 +59,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
 // Получение файлов проекта
 router.get('/:projectId', getFiles);
-
+router.get('/client/:projectId/files', getFiles);
 // Удаление файла
 router.delete('/:id', deleteFile);
 
