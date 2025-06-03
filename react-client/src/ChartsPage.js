@@ -3,50 +3,54 @@ import axios from 'axios';
 import { Line, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
-import './ChartsPage.css'; // Подключаем CSS файл для стилизации
+import './ChartsPage.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement);
 
 const ProjectCharts = () => {
   const [usersData, setUsersData] = useState([]);
-  const [storageData, setStorageData] = useState({ used: 0, total: 2 * 1024 }); // 2 ГБ в МБ
+  const [storageData, setStorageData] = useState({ used: 0, total: 2 * 1024 });
   const [timeRange, setTimeRange] = useState('7d');
   const [fileTypeData, setFileTypeData] = useState([]);
+  const [totalUsers, setTotalUsers] = useState(0); // Новое состояние для общего количества пользователей
   const navigate = useNavigate();
 
-  // Функция для получения данных о типах файлов
- // Функция для получения данных о типах файлов
- const fetchFileTypeData = async () => {
-  try {
-    const response = await axios.get('http://localhost:5000/files');
-    console.log('Данные о типах файлов:', response.data);
+  const fetchFileTypeData = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/files');
+      console.log('Данные о типах файлов:', response.data);
 
-    if (Array.isArray(response.data)) {
-      const isValidData = response.data.every(file => 
-        file.hasOwnProperty('file_extension') && typeof file.file_extension === 'string' &&
-        file.hasOwnProperty('total_size') && typeof file.total_size === 'number'
-      );
+      if (Array.isArray(response.data)) {
+        const isValidData = response.data.every(file => 
+          file.hasOwnProperty('file_extension') && typeof file.file_extension === 'string' &&
+          file.hasOwnProperty('total_size') && typeof file.total_size === 'number'
+        );
 
-      if (isValidData) {
-        setFileTypeData(response.data); // Обновляем состояние с типами файлов
+        if (isValidData) {
+          setFileTypeData(response.data);
+        } else {
+          console.error('Ошибка: Неверный формат данных о типах файлов.');
+          setFileTypeData([]);
+        }
       } else {
-        console.error('Ошибка: Неверный формат данных о типах файлов.');
-        setFileTypeData([]); // Если формат неверный, очищаем данные
+        console.error('Ошибка: Ответ не является массивом.', response.data);
+        setFileTypeData([]);
       }
-    } else {
-      console.error('Ошибка: Ответ не является массивом.', response.data);
-      setFileTypeData([]);
+    } catch (error) {
+      console.error('Ошибка при получении данных о типах файлов:', error);
     }
-  } catch (error) {
-    console.error('Ошибка при получении данных о типах файлов:', error);
-  }
-};
+  };
 
-  // Функции для получения других данных
   const fetchUsersData = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/users/activity?range=${timeRange}`);
-      setUsersData(response.data);
+      // Запрос данных для графика
+      const activityResponse = await axios.get(`http://localhost:5000/api/users/activity?range=${timeRange}`);
+      setUsersData(activityResponse.data);
+      const totalUsers = activityResponse.data.reduce((sum, entry) => sum + entry.count, 0);
+      setTotalUsers(totalUsers);
+      // Новый запрос для получения общего количества пользователей
+      const totalResponse = await axios.get(`http://localhost:5000/api/users/total?range=${timeRange}`);
+      setTotalUsers(totalResponse.data.total);
     } catch (error) {
       console.error('Ошибка при получении данных о пользователях:', error);
     }
@@ -63,7 +67,7 @@ const ProjectCharts = () => {
         return;
       }
   
-      const totalSizeMB = Math.round(response.data.totalSize / (1024 * 1024)); // Перевод в МБ
+      const totalSizeMB = Math.round(response.data.totalSize / (1024 * 1024));
       setStorageData({ used: totalSizeMB, total: 2048 });
     } catch (error) {
       console.error('Ошибка при получении данных о хранилище:', error);
@@ -71,14 +75,12 @@ const ProjectCharts = () => {
     }
   };
 
-  // useEffect для выполнения запросов при изменении временного диапазона
   useEffect(() => {
     fetchUsersData();
     fetchStorageData();
-    fetchFileTypeData();  // Добавим вызов fetchFileTypeData
+    fetchFileTypeData();
   }, [timeRange]);
 
-  // Данные для графиков
   const lineData = {
     labels: usersData.map((entry) => entry.date),
     datasets: [
@@ -108,6 +110,7 @@ const ProjectCharts = () => {
       },
     ],
   };
+
   return (
     <div className="charts-container">
       <div className="button-container">
@@ -126,6 +129,9 @@ const ProjectCharts = () => {
 
       <div className="chart-container">
         <h2>Активность пользователей</h2>
+        <div className="stats-info">
+          <p>Общее количество пользователей за период: <strong>{totalUsers}</strong></p>
+        </div>
         <Line data={lineData} />
       </div>
 

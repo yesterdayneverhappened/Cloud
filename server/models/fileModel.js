@@ -9,7 +9,44 @@ const fileList = async (project_id) => {
     throw err;
   }
 };
+const validateApiKey = async (apiKey, projectId) => {
+  const [projectRows] = await con.execute(`SELECT * FROM projects WHERE id = ?`, [projectId]);
+  const project = projectRows[0];
+  if (!project) return false;
 
+  const [clientRows] = await con.execute(`SELECT * FROM clients WHERE api_key = ?`, [apiKey]);
+  const client = clientRows[0];
+  if (!client) return false;
+
+  return project.client_id === client.id;
+};
+
+const getProjectFiles = async (projectId, apiKey) => {
+  const isValid = await validateApiKey(apiKey, projectId);
+  if (!isValid) {
+    throw new Error('Invalid API key or project ID');
+  }
+
+  const projectDir = path.join(__dirname, '..', 'projects', String(projectId));
+  if (!fs.existsSync(projectDir)) {
+    throw new Error('Project directory not found');
+  }
+
+  const files = fs.readdirSync(projectDir);
+
+  return files.map(fileName => {
+    const filePath = path.join(projectDir, fileName);
+    const stats = fs.statSync(filePath);
+
+    return {
+      name: fileName,
+      content: fs.readFileSync(filePath).toString('base64'),
+      size: stats.size,
+      type: path.extname(fileName).substring(1) || 'unknown',
+      lastModified: stats.mtime,
+    };
+  });
+};
 const addFile = async (project_id, filename, filepath, fileSize, fileExtension) => {
   console.log(`Добавление файла: ${filename} в проект ${project_id}`);
   const sql = `INSERT INTO files (project_id, filename, filepath, file_size, file_extension, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
@@ -76,4 +113,4 @@ const getAllFilesSize = async () => {
   }
 };
 
-module.exports = { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize };
+module.exports = { fileList, getProjectFiles, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize };

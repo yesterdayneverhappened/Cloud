@@ -88,4 +88,81 @@ const getProjectReport = async () => {
   }
 };
 
-module.exports = { registerUser, getUserByEmail, getActivityData, getProjectReport };
+const getClientById = (clientId) => {
+  return new Promise((resolve, reject) => {
+    const query = 'SELECT * FROM clients WHERE id = ?';
+
+    con.execute(query, [clientId], (err, results) => {
+      if (err) {
+        return reject('Ошибка запроса: ' + err.message); // Добавил `.message` для читаемости
+      }
+
+      if (results.length === 0) {
+        return reject('Клиент не найден');
+      }
+
+      resolve(results[0]);
+    });
+  });
+};
+
+const getAllClient = async (req, res) => {
+  try {
+    const users = await con.query('SELECT * FROM clients');
+    return users;
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    
+    // Удаляем файлы пользователя
+    await con.execute(`
+      DELETE files 
+      FROM files
+      JOIN projects ON projects.id = files.project_id
+      WHERE projects.client_id = ?
+    `, [userId]);
+    
+    // Удаляем проекты пользователя
+    await con.execute('DELETE FROM projects WHERE client_id = ?', [userId]);
+    
+    // Удаляем самого пользователя
+    await con.execute('DELETE FROM clients WHERE id = ?', [userId]);
+    
+    res.send('User and all related data deleted');
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+function generateApiKey() {
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  
+  for (let i = 0; i < 6; i++) {
+    result += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  
+  return result;
+};
+const updateApiKey = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const newApiKey = generateApiKey();
+    
+    await con.execute(
+      'UPDATE clients SET api_key = ? WHERE id = ?',
+      [newApiKey, userId]
+    );
+    
+    res.send(`New API Key: ${newApiKey}`);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+module.exports = { registerUser, getUserByEmail, getActivityData, getProjectReport, getClientById, getAllClient, deleteUser, updateApiKey };

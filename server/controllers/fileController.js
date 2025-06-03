@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { fileList, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize } = require('../models/fileModel');
+const { fileList, getProjectFiles, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize } = require('../models/fileModel');
 const updateProject = async (project_id, filename, filepath, fileSize, fileExtension) => {
   await addFile(project_id, filename, filepath, fileSize, fileExtension);
 };
@@ -15,7 +15,26 @@ const getFiles = async (req, res) => {
     res.status(500).json({ error: 'Ошибка при получении файлов', details: err });
   }
 };
-
+const getFilesE = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const apiKey = req.headers['x-api-key'];
+    
+    const files = await getProjectFiles(projectId, apiKey);
+    res.json(files);
+  } catch (err) {
+    console.error('Files controller error:', err);
+    
+    // Определяем статус и сообщение по умолчанию
+    const status = err.statusCode || 500;
+    const message = err.message || 'Internal server error';
+    
+    res.status(status).json({ 
+      error: message,
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
+  }
+};
 
 const deleteFile = async (req, res) => {
   const fileId = req.params.id;
@@ -171,4 +190,4 @@ const getAllFilesSizeController = async (req, res) => {
 
 
 
-module.exports = { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController, getCountFile, getAllFilesSizeController };
+module.exports = { updateProject, getFiles, getFilesE, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController, getCountFile, getAllFilesSizeController };
