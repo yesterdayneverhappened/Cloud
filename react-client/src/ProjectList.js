@@ -156,6 +156,9 @@ class ProjectList extends Component {
           <Link to={`/charts`}>
             <button>Диаграммы</button>
           </Link>
+          <Link to={'/userlist'}>
+            <button>Пользователи</button>
+          </Link>
           <div>
             <button onClick={this.exportToExcel}>Скачать отчет в Excel</button>
           </div>
