@@ -88,4 +88,23 @@ const getProjectReport = async () => {
   }
 };
 
-module.exports = { registerUser, getUserByEmail, getActivityData, getProjectReport };
+const getClientById = (clientId) => {
+  return new Promise((resolve, reject) => {
+    const query = 'SELECT * FROM clients WHERE id = ?';
+
+    con.execute(query, [clientId], (err, results) => {
+      if (err) {
+        return reject('Ошибка запроса: ' + err.message); // Добавил `.message` для читаемости
+      }
+
+      if (results.length === 0) {
+        return reject('Клиент не найден');
+      }
+
+      resolve(results[0]);
+    });
+  });
+};
+
+
+module.exports = { registerUser, getUserByEmail, getActivityData, getProjectReport, getClientById };

@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { registerUser, getUserByEmail, getActivityData, getProjectReport } = require('../models/userModels');
+const { registerUser, getUserByEmail, getActivityData, getProjectReport, getClientById } = require('../models/userModels');
 
 const register = async (req, res) => {
     try {
@@ -69,4 +69,33 @@ const exportLogFile = async (req, res) => {
     res.status(500).json({ error: 'Ошибка при получении данных для отчета' });
   }
 };
-module.exports = { register, login, getUsersActivity, exportLogFile };
+
+
+const getUser = async (req, res) => {
+  try {
+    console.log('Запрос на /user/:id получен');
+    const clientId = req.params.id;
+    console.log('clientId:', clientId);
+
+    const reportData = await getClientById(clientId);
+    console.log('Данные клиента:', reportData);
+
+    res.status(200).json(reportData);
+  } catch (error) {
+    console.error('Ошибка при получении пользователя:', error);
+
+    // Разные статусы для разных ошибок
+    if (typeof error === 'string') {
+      if (error.includes('не найден')) {
+        return res.status(404).json({ error });
+      } else if (error.includes('Ошибка запроса')) {
+        return res.status(500).json({ error });
+      }
+    }
+
+    res.status(500).json({ error: 'Неизвестная ошибка' });
+  }
+};
+
+
+module.exports = { register, login, getUsersActivity, exportLogFile, getUser };

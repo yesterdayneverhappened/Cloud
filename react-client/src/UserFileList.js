@@ -16,12 +16,14 @@ const UserFileList = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [uploadProgress, setUploadProgress] = useState([]);
-
+  const [apiKey, setApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [copyStatus, setCopyStatus] = useState('Копировать');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState('');
   const [filterSize, setFilterSize] = useState('');
-  const [sizeUnit, setSizeUnit] = useState('bytes'); // Единица измерения размера
+  const [sizeUnit, setSizeUnit] = useState('bytes');
 
   const navigate = useNavigate();
 
@@ -35,10 +37,31 @@ const UserFileList = () => {
 
   const getUserIdFromToken = () => {
     const token = localStorage.getItem('token');
-    const decodedToken = jwtDecode(token);
-    const userId = decodedToken.id;
-    setUserId(userId)
-};
+    if (!token) return;
+  
+    try {
+      const decodedToken = jwtDecode(token);
+      const userId = decodedToken.id;
+      setUserId(userId); // если setUserId — это функция из useState, она обновит состояние
+  
+      // Делаем запрос к API с правильным userId
+      axios.get(`http://localhost:5000/api/users/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        const apiKey = res.data.api_key;
+        setApiKey(apiKey); // сохранить api_key, если используется useState
+        console.log('API Key пользователя:', apiKey);
+      })
+      .catch((err) => {
+        console.error('Ошибка при получении профиля пользователя:', err);
+      });
+    } catch (err) {
+      console.error('Ошибка при декодировании токена:', err);
+    }
+  };
 
   useEffect(() => {
     fetchFiles();
@@ -203,6 +226,23 @@ const UserFileList = () => {
     setFilteredFiles(updatedFiles);
   }, [searchTerm, sortType, filterSize, files, sizeUnit]);
 
+  const copyApiRequest = () => {
+    const requestText = `GET http://localhost:5000/client/${projectId}/files\nAuthorization: Bearer ${apiKey}`;
+    navigator.clipboard.writeText(requestText)
+      .then(() => {
+        setCopyStatus('Скопировано!');
+        setTimeout(() => setCopyStatus('Копировать'), 2000);
+      })
+      .catch(err => {
+        console.error('Ошибка копирования:', err);
+        setCopyStatus('Ошибка');
+      });
+  };
+
+  // Функция для переключения видимости API ключа
+  const toggleApiKeyVisibility = () => {
+    setShowApiKey(!showApiKey);
+  };
   return (
     <div className="container">
       
@@ -246,7 +286,29 @@ const UserFileList = () => {
             </div>
           </div>
         )}
-        
+        <div className="api-request-block">
+        <div className="api-request-content">
+          <h3>API запрос для получения файлов:</h3>
+          <pre className="api-request-text">
+            GET http://localhost:5000/client/{projectId}/files{'\n'}
+            Authorization: Bearer {showApiKey ? apiKey : '••••••••••••••••'}
+          </pre>
+          <div className="api-request-buttons">
+            <button 
+              className="copy-button" 
+              onClick={copyApiRequest}
+            >
+              {copyStatus}
+            </button>
+            <button 
+              className="toggle-api-key-button" 
+              onClick={toggleApiKeyVisibility}
+            >
+              {showApiKey ? 'Скрыть ключ' : 'Показать ключ'}
+            </button>
+          </div>
+        </div>
+      </div>
       <div className="filter-section">
         <input
           type="text"
