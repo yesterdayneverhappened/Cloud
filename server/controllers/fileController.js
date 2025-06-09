@@ -20,12 +20,17 @@ const getFilesE = async (req, res) => {
     const { projectId } = req.params;
     const apiKey = req.headers['x-api-key'];
     
-    const files = await getProjectFiles(projectId, apiKey);
-    res.json(files);
+    // Сначала проверяем валидность API ключа
+    const isValid = await validateApiKey(apiKey, projectId);
+    if (!isValid) {
+      return res.status(403).json({ error: 'Invalid API key or project ID' });
+    } else {
+      const files = await getProjectFilesS(projectId);
+      res.json(files);
+    }
   } catch (err) {
     console.error('Files controller error:', err);
     
-    // Определяем статус и сообщение по умолчанию
     const status = err.statusCode || 500;
     const message = err.message || 'Internal server error';
     
@@ -34,6 +39,46 @@ const getFilesE = async (req, res) => {
       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
   }
+};
+
+const validateApiKey = async (apiKey, projectId) => {
+  if (!apiKey || !projectId) return false;
+
+  try {
+    const [rows] = await con.execute(`
+      SELECT 1
+      FROM projects p
+      JOIN clients c ON p.client_id = c.id
+      WHERE p.id = ? AND c.api_key = ?
+    `, [projectId, apiKey]);
+
+    return rows.length > 0;
+  } catch (err) {
+    console.error('API key validation error:', err);
+    return false;
+  }
+};
+
+const getProjectFilesS = async (projectId) => {
+  const projectDir = path.join(__dirname, '..', 'projects', String(projectId));
+  if (!fs.existsSync(projectDir)) {
+    throw new Error('Project directory not found');
+  }
+
+  const files = fs.readdirSync(projectDir);
+
+  return files.map(fileName => {
+    const filePath = path.join(projectDir, fileName);
+    const stats = fs.statSync(filePath);
+
+    return {
+      name: fileName,
+      content: fs.readFileSync(filePath).toString('base64'),
+      size: stats.size,
+      type: path.extname(fileName).substring(1) || 'unknown',
+      lastModified: stats.mtime,
+    };
+  });
 };
 
 const deleteFile = async (req, res) => {
