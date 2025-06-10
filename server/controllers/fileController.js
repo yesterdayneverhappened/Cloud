@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { fileList, getProjectFiles, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize } = require('../models/fileModel');
+const { fileList, addFile,validateApiKey,getProjectFiles, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize } = require('../models/fileModel');
 const updateProject = async (project_id, filename, filepath, fileSize, fileExtension) => {
   await addFile(project_id, filename, filepath, fileSize, fileExtension);
 };
@@ -18,67 +18,20 @@ const getFiles = async (req, res) => {
 const getFilesE = async (req, res) => {
   try {
     const { projectId } = req.params;
+
     const apiKey = req.headers['x-api-key'];
-    
-    // Сначала проверяем валидность API ключа
     const isValid = await validateApiKey(apiKey, projectId);
+
     if (!isValid) {
       return res.status(403).json({ error: 'Invalid API key or project ID' });
-    } else {
-      const files = await getProjectFilesS(projectId);
-      res.json(files);
     }
+
+    const files = await getProjectFiles(projectId); // ✅ передаём именно ID
+    res.json(files);
   } catch (err) {
     console.error('Files controller error:', err);
-    
-    const status = err.statusCode || 500;
-    const message = err.message || 'Internal server error';
-    
-    res.status(status).json({ 
-      error: message,
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-    });
+    res.status(500).json({ error: 'Internal server error' });
   }
-};
-
-const validateApiKey = async (apiKey, projectId) => {
-  if (!apiKey || !projectId) return false;
-
-  try {
-    const [rows] = await con.execute(`
-      SELECT 1
-      FROM projects p
-      JOIN clients c ON p.client_id = c.id
-      WHERE p.id = ? AND c.api_key = ?
-    `, [projectId, apiKey]);
-
-    return rows.length > 0;
-  } catch (err) {
-    console.error('API key validation error:', err);
-    return false;
-  }
-};
-
-const getProjectFilesS = async (projectId) => {
-  const projectDir = path.join(__dirname, '..', 'projects', String(projectId));
-  if (!fs.existsSync(projectDir)) {
-    throw new Error('Project directory not found');
-  }
-
-  const files = fs.readdirSync(projectDir);
-
-  return files.map(fileName => {
-    const filePath = path.join(projectDir, fileName);
-    const stats = fs.statSync(filePath);
-
-    return {
-      name: fileName,
-      content: fs.readFileSync(filePath).toString('base64'),
-      size: stats.size,
-      type: path.extname(fileName).substring(1) || 'unknown',
-      lastModified: stats.mtime,
-    };
-  });
 };
 
 const deleteFile = async (req, res) => {

@@ -1,4 +1,6 @@
 const con = require('../config/db');
+const path = require('path');
+const fs = require('fs');
 
 const fileList = async (project_id) => {
   const sql = `SELECT * FROM files WHERE project_id = ?`;
@@ -10,42 +12,50 @@ const fileList = async (project_id) => {
   }
 };
 const validateApiKey = async (apiKey, projectId) => {
-  const [projectRows] = await con.execute(`SELECT * FROM projects WHERE id = ?`, [projectId]);
-  const project = projectRows[0];
-  if (!project) return false;
+  if (!apiKey || !projectId) return false;
 
-  const [clientRows] = await con.execute(`SELECT * FROM clients WHERE api_key = ?`, [apiKey]);
-  const client = clientRows[0];
-  if (!client) return false;
+  try {
+    const [rows] = await con.execute(`
+      SELECT 1
+      FROM projects p
+      JOIN clients c ON p.client_id = c.id
+      WHERE p.id = ? AND c.api_key = ?
+    `, [projectId, apiKey]);
 
-  return project.client_id === client.id;
+    return rows.length > 0;
+  } catch (err) {
+    console.error('API key validation error:', err);
+    return false;
+  }
 };
 
-const getProjectFiles = async (projectId, apiKey) => {
-  const isValid = await validateApiKey(apiKey, projectId);
-  if (!isValid) {
-    throw new Error('Invalid API key or project ID');
+const getProjectFiles = async (projectId) => {
+  try {
+    const filesFromDb = await fileList(projectId);
+
+    return filesFromDb.map(file => {
+      const filePath = path.join(__dirname, '..', file.filepath);
+
+      if (!fs.existsSync(filePath)) {
+        console.warn('File not found:', filePath);
+        return null;
+      }
+
+      const stats = fs.statSync(filePath);
+      const content = fs.readFileSync(filePath).toString('base64');
+
+      return {
+        name: file.filename, // или file.original_name, если у тебя есть
+        content,
+        size: stats.size,
+        type: path.extname(filePath).substring(1) || 'unknown',
+        lastModified: stats.mtime,
+      };
+    }).filter(Boolean); // убираем null, если файл не найден
+  } catch (err) {
+    console.error('getProjectFiles error:', err);
+    throw err;
   }
-
-  const projectDir = path.join(__dirname, '..', 'projects', String(projectId));
-  if (!fs.existsSync(projectDir)) {
-    throw new Error('Project directory not found');
-  }
-
-  const files = fs.readdirSync(projectDir);
-
-  return files.map(fileName => {
-    const filePath = path.join(projectDir, fileName);
-    const stats = fs.statSync(filePath);
-
-    return {
-      name: fileName,
-      content: fs.readFileSync(filePath).toString('base64'),
-      size: stats.size,
-      type: path.extname(fileName).substring(1) || 'unknown',
-      lastModified: stats.mtime,
-    };
-  });
 };
 const addFile = async (project_id, filename, filepath, fileSize, fileExtension) => {
   console.log(`Добавление файла: ${filename} в проект ${project_id}`);
@@ -113,4 +123,4 @@ const getAllFilesSize = async () => {
   }
 };
 
-module.exports = { fileList, getProjectFiles, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize };
+module.exports = { fileList, getProjectFiles, validateApiKey, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize };

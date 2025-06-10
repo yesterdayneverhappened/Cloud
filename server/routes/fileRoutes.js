@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const { updateProject, getFiles, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController, getCountFile, getAllFilesSizeController } = require('../controllers/fileController');
+const { updateProject, getFiles, getFilesE, deleteFile, getFilesWithSizes, downloadFile, renameFile, replaceFileController, getCountFile, getAllFilesSizeController } = require('../controllers/fileController');
 
 const router = express.Router();
 
@@ -59,7 +59,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
 // Получение файлов проекта
 router.get('/:projectId', getFiles);
-router.get('/client/:projectId/files', getFiles);
+router.get('/client/:projectId/files', getFilesE);
 // Удаление файла
 router.delete('/:id', deleteFile);
 
