@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { fileList, getProjectFiles, addFile, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize } = require('../models/fileModel');
+const { fileList, addFile,validateApiKey,getProjectFiles, deleteFileFromDatabase, getFilesByProjectId, getFileById, renameFileq, replaceFile, getFileByIdCount, getAllFilesSize } = require('../models/fileModel');
 const updateProject = async (project_id, filename, filepath, fileSize, fileExtension) => {
   await addFile(project_id, filename, filepath, fileSize, fileExtension);
 };
@@ -18,21 +18,19 @@ const getFiles = async (req, res) => {
 const getFilesE = async (req, res) => {
   try {
     const { projectId } = req.params;
+
     const apiKey = req.headers['x-api-key'];
-    
-    const files = await getProjectFiles(projectId, apiKey);
+    const isValid = await validateApiKey(apiKey, projectId);
+
+    if (!isValid) {
+      return res.status(403).json({ error: 'Invalid API key or project ID' });
+    }
+
+    const files = await getProjectFiles(projectId); // ✅ передаём именно ID
     res.json(files);
   } catch (err) {
     console.error('Files controller error:', err);
-    
-    // Определяем статус и сообщение по умолчанию
-    const status = err.statusCode || 500;
-    const message = err.message || 'Internal server error';
-    
-    res.status(status).json({ 
-      error: message,
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-    });
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 

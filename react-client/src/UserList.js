@@ -11,7 +11,12 @@ const UserManagement = () => {
   const [newApiKey, setNewApiKey] = useState(null);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  
+  // Пагинация
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage] = useState(10); // Количество пользователей на странице
+
   // Загрузка пользователей
   useEffect(() => {
     const fetchUsers = async () => {
@@ -20,7 +25,7 @@ const UserManagement = () => {
         const response = await axios.get('http://localhost:5000/api/users');
         const usersArray = response.data[0]; 
         setUsers(usersArray);
-        setFilteredUsers(usersArray); // Инициализируем filteredUsers
+        setFilteredUsers(usersArray);
         setError('');
       } catch (err) {
         setError('Ошибка при получении пользователей: ' + err.message);
@@ -38,7 +43,14 @@ const UserManagement = () => {
       user.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredUsers(filtered);
+    setCurrentPage(1); // Сброс на первую страницу при новом поиске
   }, [searchTerm, users]);
+
+  // Получение текущих пользователей для отображения
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
   // Генерация нового API-ключа
   const regenerateApiKey = async (userId) => {
@@ -79,13 +91,16 @@ const UserManagement = () => {
     return new Date(dateString).toLocaleString('ru-RU');
   };
 
+  // Изменение страницы
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   if (loading) {
     return <div className="loading">Загрузка пользователей...</div>;
   }
 
   return (
     <div className="user-management">
-        <button onClick={() => navigate('/projects')}>На главную</button>
+      <button onClick={() => navigate('/projects')}>На главную</button>
       <h1>Управление пользователями</h1>
       
       {error && <div className="error">{error}</div>}
@@ -106,45 +121,72 @@ const UserManagement = () => {
           {searchTerm ? 'Пользователи не найдены' : 'Пользователи не найдены'}
         </div>
       ) : (
-        <table className="user-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Имя</th>
-              <th>Домен</th>
-              <th>API-ключ</th>
-              <th>Дата регистрации</th>
-              <th>Действия</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map(user => (
-              <tr key={user.id}>
-                <td>{user.id}</td>
-                <td>{user.name || 'N/A'}</td>
-                <td>{user.domain || 'N/A'}</td>
-                <td className="api-key-cell">
-                  <div className="api-key">{user.api_key || 'N/A'}</div>
-                </td>
-                <td>{formatDate(user.register_date)}</td>
-                <td className="actions">
-                  <button 
-                    className="btn-regenerate"
-                    onClick={() => regenerateApiKey(user.id)}
-                  >
-                    Сменить ключ
-                  </button>
-                  <button 
-                    className="btn-delete"
-                    onClick={() => deleteUser(user.id)}
-                  >
-                    Удалить
-                  </button>
-                </td>
+        <>
+          <table className="user-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Имя</th>
+                <th>Домен</th>
+                <th>API-ключ</th>
+                <th>Дата регистрации</th>
+                <th>Действия</th>
               </tr>
+            </thead>
+            <tbody>
+              {currentUsers.map(user => (
+                <tr key={user.id}>
+                  <td>{user.id}</td>
+                  <td>{user.name || 'N/A'}</td>
+                  <td>{user.domain || 'N/A'}</td>
+                  <td className="api-key-cell">
+                    <div className="api-key">{user.api_key || 'N/A'}</div>
+                  </td>
+                  <td>{formatDate(user.register_date)}</td>
+                  <td className="actions">
+                    <button 
+                      className="btn-regenerate"
+                      onClick={() => regenerateApiKey(user.id)}
+                    >
+                      Сменить ключ
+                    </button>
+                    <button 
+                      className="btn-delete"
+                      onClick={() => deleteUser(user.id)}
+                    >
+                      Удалить
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Пагинация */}
+          <div className="pagination">
+            {currentPage > 1 && (
+              <button onClick={() => paginate(currentPage - 1)}>&laquo; Назад</button>
+            )}
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+              <button
+                key={number}
+                onClick={() => paginate(number)}
+                className={currentPage === number ? 'active' : ''}
+              >
+                {number}
+              </button>
             ))}
-          </tbody>
-        </table>
+            
+            {currentPage < totalPages && (
+              <button onClick={() => paginate(currentPage + 1)}>Вперед &raquo;</button>
+            )}
+          </div>
+
+          <div className="page-info">
+            Страница {currentPage} из {totalPages} | Пользователи: {indexOfFirstUser + 1}-{Math.min(indexOfLastUser, filteredUsers.length)} из {filteredUsers.length}
+          </div>
+        </>
       )}
     </div>
   );
