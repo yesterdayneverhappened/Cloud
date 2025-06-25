@@ -1,79 +1,67 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
-import * as XLSX from 'xlsx'; // For working with spreadsheets
-import '../styles-for-compontnts/Project.css';
+import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
+import { Modal, Menu, Dropdown, Button, List, message, Input } from 'antd';
+import { MoreOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 
-export default function File({ file, deleteFile, onOpenContextMenu, renameFile, userId, moveFile }) {
-  const [isMenuVisible, setIsMenuVisible] = useState(false);
-  const [showModal, setShowModal] = useState(false); // Modal for file info
-  const [showMoveModal, setShowMoveModal] = useState(false); // Modal for file move
-  const [projects, setProjects] = useState([]); // List of projects
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [modalContent, setModalContent] = useState(null);
+export default function File({ file, deleteFile, renameFile, userId, moveFile }) {
+  const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const menuRef = useRef(null);
+  const [modalContent, setModalContent] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const [moveModalVisible, setMoveModalVisible] = useState(false);
+  const [projects, setProjects] = useState([]);
+
+  const [renameModalVisible, setRenameModalVisible] = useState(false);
+  const [newFileName, setNewFileName] = useState(file.filename);
+
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
 
   const fileColors = {
-    'xls': 'green',
-    'xlsx': 'green',
-    'ppt': 'orange',
-    'pptx': 'orange',
-    'doc': 'blue',
-    'docx': 'blue',
-    'pdf': 'red',
-    'txt': 'gray',
-    'csv': 'purple'
+    xls: 'green',
+    xlsx: 'green',
+    ppt: 'orange',
+    pptx: 'orange',
+    doc: 'blue',
+    docx: 'blue',
+    pdf: 'red',
+    txt: 'gray',
+    csv: 'purple',
   };
 
-  const getFileBorderColor = (extension) => fileColors[extension.toLowerCase()] || 'black';
+  const getFileBorderColor = (ext) => fileColors[ext.toLowerCase()] || 'black';
 
-  // Show/hide context menu
-  const toggleMenu = (e) => {
-    e.stopPropagation();
-    onOpenContextMenu();
-    setIsMenuVisible(!isMenuVisible);
-  };
-
-  // Fetch file preview
   const handleFilePreview = async () => {
-    setIsLoading(true); // Начинаем загрузку
-  
+    setLoading(true);
     try {
       const response = await axios.get(`http://localhost:5000/files/download/${file.id}`, {
-        responseType: 'arraybuffer', // Получаем файл в бинарном формате
+        responseType: 'arraybuffer',
       });
-  
+
       const fileType = file.file_extension.toLowerCase();
-  
-      if (['txt'].includes(fileType)) {
-        // Обработка текстовых файлов
+
+      if (fileType === 'txt') {
         const textContent = new TextDecoder('utf-8').decode(response.data);
-        setModalContent(<pre>{textContent}</pre>);
+        setModalContent(<pre style={{ whiteSpace: 'pre-wrap' }}>{textContent}</pre>);
         setModalTitle('Просмотр текста');
-      } else if (['doc', 'docx'].includes(fileType)) {
-        // Обработка Word файлов с использованием Mammoth
+      } else if (fileType === 'doc' || fileType === 'docx') {
         const arrayBuffer = response.data;
-  
-        mammoth.convertToHtml({ arrayBuffer })
-          .then(result => {
+        mammoth
+          .convertToHtml({ arrayBuffer })
+          .then((result) => {
             setModalContent(<div dangerouslySetInnerHTML={{ __html: result.value }} />);
             setModalTitle('Просмотр документа Word');
           })
-          .catch(error => {
-            console.error('Ошибка при конвертации Word файла:', error);
-            alert('Не удалось загрузить содержимое Word файла.');
+          .catch(() => {
+            message.error('Не удалось загрузить содержимое Word файла.');
           });
-      } else if (['png', 'jpg', 'jpeg'].includes(fileType)) {
-        // Обработка изображений
+      } else if (['png', 'jpg', 'jpeg', 'gif'].includes(fileType)) {
         const imageUrl = URL.createObjectURL(new Blob([response.data]));
-        setModalContent(
-          <img src={imageUrl} alt={file.filename} style={{ maxWidth: '100%' }} />
-        );
+        setModalContent(<img src={imageUrl} alt={file.filename} style={{ maxWidth: '100%' }} />);
         setModalTitle('Просмотр изображения');
       } else if (fileType === 'xlsx') {
-        // Обработка Excel файлов
         const workbook = XLSX.read(new Uint8Array(response.data), { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
@@ -81,179 +69,238 @@ export default function File({ file, deleteFile, onOpenContextMenu, renameFile, 
         setModalContent(<div dangerouslySetInnerHTML={{ __html: htmlTable }} />);
         setModalTitle('Просмотр таблицы');
       } else if (fileType === 'pdf') {
-        // Обработка PDF файлов
         const blob = new Blob([response.data], { type: 'application/pdf' });
         const pdfUrl = URL.createObjectURL(blob);
         setModalContent(
-          <iframe src={pdfUrl} style={{ width: '100%', height: '500px' }} title="PDF Preview" />
+          <iframe src={pdfUrl} style={{ width: '100%', height: 500 }} title="PDF Preview" />
         );
         setModalTitle('Просмотр PDF');
       } else {
-        alert('Формат файла не поддерживается для предварительного просмотра.');
+        message.info('Формат файла не поддерживается для предварительного просмотра.');
+        setLoading(false);
         return;
       }
-  
-      setIsModalVisible(true); // Показываем модальное окно
+
+      setModalVisible(true);
     } catch (error) {
-      console.error('Ошибка при получении данных файла:', error);
-      alert('Не удалось загрузить содержимое файла.');
+      message.error('Не удалось загрузить содержимое файла.');
     } finally {
-      setIsLoading(false); // Останавливаем индикатор загрузки
+      setLoading(false);
     }
   };
 
-  // Close context menu if clicked outside
-  const handleClickOutside = (e) => {
-    if (menuRef.current && !menuRef.current.contains(e.target)) {
-      setIsMenuVisible(false);
-    }
-  };
-
-  // Copy file URL to clipboard
   const copyToClipboard = () => {
     const fileUrl = `http://localhost:5000/files/download/${file.id}`;
-    navigator.clipboard.writeText(fileUrl)
-      .then(() => alert(`Ссылка на файл скопирована:\n${fileUrl}`))
-      .catch((err) => console.error('Ошибка при копировании:', err));
+    navigator.clipboard
+      .writeText(fileUrl)
+      .then(() => message.success('Ссылка на файл скопирована'))
+      .catch(() => message.error('Ошибка при копировании ссылки'));
   };
 
-  // Open modal for file move
   const openMoveModal = async () => {
     try {
       const response = await axios.get(`http://localhost:5000/projects/user/${userId}`);
       setProjects(response.data);
-      setShowMoveModal(true);
-    } catch (error) {
-      console.error('Ошибка при получении проектов:', error);
-      alert('Ошибка при получении списка проектов');
+      setMoveModalVisible(true);
+    } catch {
+      message.error('Ошибка при получении списка проектов');
     }
   };
 
-  // Handle menu actions
-  const handleMenuAction = async (action) => {
-    switch (action) {
+  const handleMenuClick = ({ key }) => {
+    switch (key) {
       case 'info':
-        setShowModal(true);
+        setModalContent(
+          <>
+            <p><b>Название:</b> {file.filename}</p>
+            <p><b>Размер:</b> {file.file_size} байт</p>
+            <p><b>Расширение:</b> {file.file_extension}</p>
+            <p><b>Дата загрузки:</b> {new Date(file.created_at).toLocaleString()}</p>
+          </>
+        );
+        setModalTitle('Информация о файле');
+        setModalVisible(true);
         break;
+
       case 'rename':
-        await renameFile(file);
+        setNewFileName(file.filename);
+        setRenameModalVisible(true);
         break;
+
       case 'delete':
-        deleteFile(file.id);
+        setDeleteConfirmVisible(true);
         break;
+
       case 'move':
         openMoveModal();
         break;
+
       case 'copy':
         copyToClipboard();
         break;
+
       default:
         break;
     }
-    setIsMenuVisible(false);
   };
 
-  // Move file between projects
-  const moveFileSystem = (fileId, projectId) => {
+  const moveFileSystem = (projectId) => {
     try {
-      moveFile(fileId, projectId);
-      setShowMoveModal(false);
+      moveFile(file.id, projectId);
+      setMoveModalVisible(false);
+      message.success('Файл перемещён');
     } catch {
-      alert("Упс, возникла ошибка при перемещении файла");
+      message.error('Ошибка при перемещении файла');
     }
   };
 
-  useEffect(() => {
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, []);
+  const submitRename = async () => {
+    if (!newFileName.trim()) {
+      message.warning('Имя файла не может быть пустым');
+      return;
+    }
+    if (newFileName === file.filename) {
+      setRenameModalVisible(false);
+      return;
+    }
+    try {
+      await renameFile(file.id, newFileName );
+      message.success('Файл переименован');
+      setRenameModalVisible(false);
+    } catch {
+      message.error('Ошибка при переименовании файла');
+    }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await deleteFile(file.id);
+      message.success('Файл удалён');
+      setDeleteConfirmVisible(false);
+    } catch {
+      message.error('Ошибка при удалении файла');
+    }
+  };
+
+  const menu = (
+    <Menu onClick={handleMenuClick}>
+      <Menu.Item key="info">ℹ️ Информация</Menu.Item>
+      <Menu.Item key="rename">✏️ Переименовать</Menu.Item>
+      <Menu.Item key="delete">❌ Удалить</Menu.Item>
+      <Menu.Item key="move">📂 Переместить</Menu.Item>
+      <Menu.Item key="copy">📄 Копировать</Menu.Item>
+    </Menu>
+  );
 
   return (
-    <div className="file-card" style={{ border: `1px solid ${getFileBorderColor(file.file_extension)}` }}>
-      <div className="file-content"
+    <div
+      className="file-card"
+      style={{
+        border: `1px solid ${getFileBorderColor(file.file_extension)}`,
+        padding: 8,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        maxWidth: 400,
+        marginBottom: 8,
+        width: '100%'
+      }}
+    >
+      <div
         style={{
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
-          maxWidth: '200px'
+          maxWidth: 200,
+          cursor: 'pointer',
         }}
         onClick={handleFilePreview}
+        title="Клик для просмотра"
       >
         <strong>{file.filename}</strong>
       </div>
 
-      <div className="file-actions">
-        <button
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Button
+          type="link"
           onClick={() => window.open(`http://localhost:5000/files/download/${file.id}`, '_blank')}
-          className="download-button"
+          style={{ padding: 0 }}
         >
           Скачать
-        </button>
+        </Button>
 
-        <button className="menu-button" onClick={toggleMenu}>⋮</button>
-
-        {isMenuVisible && (
-          <div ref={menuRef} className="context-menu">
-            <div onClick={() => handleMenuAction('info')}>ℹ️ Информация</div>
-            <div onClick={() => handleMenuAction('rename')}>✏️ Переименовать</div>
-            <div onClick={() => handleMenuAction('delete')}>❌ Удалить</div>
-            <div onClick={() => handleMenuAction('move')}>📂 Переместить</div>
-            <div onClick={() => handleMenuAction('copy')}>📄 Копировать</div>
-          </div>
-        )}
-
-        {/* File info modal */}
-        {showModal && (
-          <div className="modal-overlay" onClick={() => setShowModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <button className="modal-close" onClick={() => setShowModal(false)}>✖</button>
-              <h2>Информация о файле</h2>
-              <p><strong>Название:</strong> {file.filename}</p>
-              <p><strong>Размер:</strong> {file.file_size} байт</p>
-              <p><strong>Расширение:</strong> {file.file_extension}</p>
-              <p><strong>Дата загрузки:</strong> {new Date(file.created_at).toLocaleString()}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Move file modal */}
-        {showMoveModal && (
-          <div className="modal-overlay" onClick={() => setShowMoveModal(false)}>
-            <div className="move-file-modal" onClick={(e) => e.stopPropagation()}>
-              <button className="move-file-close" onClick={() => setShowMoveModal(false)}>✖</button>
-              <h2 className="move-file-title">Переместить файл</h2>
-              <p className="move-file-description">Выберите проект:</p>
-              <ul className="move-file-list">
-                {projects.map((project) => (
-                  <li key={project.id} className="move-file-item">
-                    <button className="move-file-button" onClick={() => moveFileSystem(file.id, project.id)}>
-                      {project.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-        {isLoading && (
-          <div className="loading-overlay">
-            <div className="loading-spinner">Загрузка...</div> {/* Индикатор загрузки */}
-          </div>
-        )}
-        {/* File preview modal */}
-        {isModalVisible && (
-          <div className="modal-overlay" onClick={() => setIsModalVisible(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <button className="modal-close" onClick={() => setIsModalVisible(false)}>✖</button>
-              <h2>{modalTitle}</h2>
-              <div className="modal-body">{modalContent}</div>
-            </div>
-          </div>
-        )}
-
+        <Dropdown overlay={menu} trigger={['click']}>
+          <Button icon={<MoreOutlined />} />
+        </Dropdown>
       </div>
+
+      {/* Просмотр/информация */}
+      <Modal
+        open={modalVisible}
+        title={modalTitle}
+        onCancel={() => setModalVisible(false)}
+        footer={null}
+        width={modalTitle === 'Просмотр PDF' ? 900 : 700}
+        bodyStyle={{ maxHeight: '70vh', overflowY: 'auto' }}
+        centered
+        confirmLoading={loading}
+      >
+        {loading ? <p>Загрузка...</p> : modalContent}
+      </Modal>
+
+      {/* Перемещение файла */}
+      <Modal
+        open={moveModalVisible}
+        title="Переместить файл"
+        onCancel={() => setMoveModalVisible(false)}
+        footer={null}
+        centered
+      >
+        <List
+          dataSource={projects}
+          renderItem={(project) => (
+            <List.Item key={project.id}>
+              <Button type="link" onClick={() => moveFileSystem(project.id)}>
+                {project.name}
+              </Button>
+            </List.Item>
+          )}
+        />
+      </Modal>
+
+      {/* Переименование файла */}
+      <Modal
+        open={renameModalVisible}
+        title="Переименовать файл"
+        onCancel={() => setRenameModalVisible(false)}
+        onOk={submitRename}
+        okText="Сохранить"
+        cancelText="Отмена"
+        centered
+      >
+        <Input
+          value={newFileName}
+          onChange={(e) => setNewFileName(e.target.value)}
+          onPressEnter={submitRename}
+          maxLength={255}
+          autoFocus
+        />
+      </Modal>
+
+      {/* Подтверждение удаления */}
+      <Modal
+        open={deleteConfirmVisible}
+        title="Подтверждение удаления"
+        onCancel={() => setDeleteConfirmVisible(false)}
+        onOk={confirmDelete}
+        okText="Удалить"
+        okButtonProps={{ danger: true }}
+        cancelText="Отмена"
+        centered
+      >
+        <ExclamationCircleOutlined style={{ color: 'red', marginRight: 8 }} />
+        Вы уверены, что хотите удалить файл <b>{file.filename}</b>?
+      </Modal>
     </div>
   );
 }

@@ -1,95 +1,98 @@
+// frontend/src/pages/UserFileList.jsx
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
-import './UserFileList.css';
-import File from './components/File';
 import { jwtDecode } from 'jwt-decode';
+import './UserFileList.css'
+import {
+  Button,
+  Input,
+  Select,
+  Typography,
+  Modal,
+  List,
+  Upload,
+  Progress,
+  Space,
+  Card,
+  message,
+} from 'antd';
+import {
+  UploadOutlined,
+  EyeInvisibleOutlined,
+  EyeTwoTone,
+  CopyOutlined,
+  ArrowLeftOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
+import File from './components/File';
+
+const { Title } = Typography;
+const { Option } = Select;
 
 const UserFileList = () => {
   const { projectId } = useParams();
   const [files, setFiles] = useState([]);
   const [filteredFiles, setFilteredFiles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [file, setFile] = useState(null);
-  const [message, setMessage] = useState('');
-  const [userId, setUserId] = useState(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [showModal, setShowModal] = useState(false);
   const [uploadProgress, setUploadProgress] = useState([]);
-  const [apiKey, setApiKey] = useState('');
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [copyStatus, setCopyStatus] = useState('Копировать');
-
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState('');
   const [filterSize, setFilterSize] = useState('');
   const [sizeUnit, setSizeUnit] = useState('bytes');
+  const [apiKey, setApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [copyStatus, setCopyStatus] = useState('');
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   const navigate = useNavigate();
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    setSelectedFiles((prevFiles) => [...prevFiles, ...droppedFiles]);
-  };
-
-  const handleDragOver = (e) => e.preventDefault();
-
-  const getUserIdFromToken = () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-  
-    try {
-      const decodedToken = jwtDecode(token);
-      const userId = decodedToken.id;
-      setUserId(userId); // если setUserId — это функция из useState, она обновит состояние
-  
-      // Делаем запрос к API с правильным userId
-      axios.get(`http://localhost:5000/api/users/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((res) => {
-        const apiKey = res.data.api_key;
-        setApiKey(apiKey); // сохранить api_key, если используется useState
-        console.log('API Key пользователя:', apiKey);
-      })
-      .catch((err) => {
-        console.error('Ошибка при получении профиля пользователя:', err);
-      });
-    } catch (err) {
-      console.error('Ошибка при декодировании токена:', err);
-    }
-  };
-
   useEffect(() => {
     fetchFiles();
-    getUserIdFromToken();
+    fetchApiKey();
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decoded = jwtDecode(token);
+      setUserId(decoded.id);
+    }
   }, [projectId]);
+
+  const fetchApiKey = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const decoded = jwtDecode(token);
+    axios.get(`http://localhost:5000/api/users/${decoded.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(res => {
+      setApiKey(res.data.api_key);
+    }).catch(console.error);
+  };
+
+  const fetchFiles = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5000/files/${projectId}`);
+      setFiles(res.data);
+    } catch (error) {
+      message.error('Ошибка при получении файлов');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const convertFileSize = (sizeInBytes) => {
     switch (sizeUnit) {
-      case 'KB':
-        return sizeInBytes / 1024;
-      case 'MB':
-        return sizeInBytes / (1024 * 1024);
-      case 'GB':
-        return sizeInBytes / (1024 * 1024 * 1024);
-      default:
-        return sizeInBytes; // По умолчанию байты
+      case 'KB': return sizeInBytes / 1024;
+      case 'MB': return sizeInBytes / 1024 / 1024;
+      case 'GB': return sizeInBytes / 1024 / 1024 / 1024;
+      default: return sizeInBytes;
     }
-  };
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
   };
 
   const handleUpload = async () => {
-    if (selectedFiles.length === 0) {
-      setMessage('Выберите файлы для загрузки');
-      return;
-    }
-  
+    if (!selectedFiles.length) return message.warning('Выберите файлы');
+
     try {
       for (const file of selectedFiles) {
         const formData = new FormData();
@@ -97,281 +100,173 @@ const UserFileList = () => {
         formData.append('projectId', projectId);
         formData.append('fileSize', file.size);
         formData.append('fileExtension', file.name.split('.').pop());
-  
-        // Устанавливаем прогресс загрузки для каждого файла
+
         await axios.post('http://localhost:5000/files/upload', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
-          onUploadProgress: (progressEvent) => {
-            const progress = (progressEvent.loaded / progressEvent.total) * 100;
-            setUploadProgress((prevProgress) => {
-              const updatedProgress = [...prevProgress];
-              updatedProgress[selectedFiles.indexOf(file)] = progress;
-              return updatedProgress;
+          onUploadProgress: (e) => {
+            const progress = (e.loaded / e.total) * 100;
+            setUploadProgress((prev) => {
+              const updated = [...prev];
+              updated[selectedFiles.indexOf(file)] = progress;
+              return updated;
             });
           },
         });
       }
-  
-      setMessage(`Успешно загружено ${selectedFiles.length} файл(ов)`);
+      message.success(`Загружено ${selectedFiles.length} файл(ов)`);
+      fetchFiles();
       setSelectedFiles([]);
-      fetchFiles();
-      setShowModal(false); // Закрываем модальное окно после загрузки
-    } catch (error) {
-      console.error('Ошибка при загрузке файла:', error);
-      setMessage('Ошибка при загрузке файлов');
-    }
-  };
-  
-  
-  const fetchFiles = async () => {
-    try {
-      const response = await axios.get(`http://localhost:5000/files/${projectId}`);
-      setFiles(response.data);
-    } catch (error) {
-      console.error('Ошибка при получении файлов:', error);
-      setMessage('Ошибка при получении файлов');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteFile = async (idFile) => {
-    try {
-      await axios.delete(`http://localhost:5000/files/${idFile}`);
-      setFiles((prevFiles) => prevFiles.filter((file) => file.id !== idFile)); // Удаление из состояния
-      setMessage('Файл успешно удалён');
+      setIsModalVisible(false);
     } catch (err) {
-      console.error('Ошибка при удалении файла:', err);
-      setMessage('Ошибка при удалении файла');
+      console.error(err);
+      message.error('Ошибка при загрузке');
     }
   };
 
-  const moveFile = async (fileId, projectId) => {
+  const handleFileChange = ({ fileList }) => {
+    setSelectedFiles(fileList.map(f => f.originFileObj));
+  };
+
+  const copyApiRequest = () => {
+    const requestText = `GET http://localhost:5000/client/${projectId}/files\nAuthorization: Bearer ${apiKey}`;
+    navigator.clipboard.writeText(requestText).then(() => {
+      setCopyStatus('Скопировано!');
+      setTimeout(() => setCopyStatus(''), 2000);
+    });
+  };
+
+  const deleteFile = async (fileId) => {
     try {
-      await axios.put(`http://localhost:5000/files/replace/${fileId}`, { projectId });
+      await axios.delete(`http://localhost:5000/files/${projectId}/${fileId}`);
+      message.success('Файл удален');
       fetchFiles();
-      return;
     } catch (error) {
-      console.error('Ошибка при перемещении файла:', error);
-      alert('Ошибка при перемещении файла');
+      message.error('Ошибка при удалении файла');
+    }
+  };
+
+  const renameFile = async (fileId, newName) => {
+    try {
+      await axios.put(`http://localhost:5000/files/rename/${fileId}`, {
+        newName: newName
+      });
+      message.success('Файл переименован');
+      fetchFiles();
+    } catch (error) {
+      message.error('Ошибка при переименовании файла');
     }
   };
   
-  const [activeFileId, setActiveFileId] = useState(null);
 
-  // Функция для закрытия предыдущего контекстного меню
-  const handleOpenContextMenu = (fileId) => {
-    setActiveFileId(fileId);
-  };
-
-  const renameFile = async (file) => {
-    const newName = prompt('Введите новое имя файла:', file.filename);
-    if (newName) {
-      try {
-        const response = await axios.put(
-          `http://localhost:5000/files/rename/${file.id}`,
-          { newName }  // Здесь передается newName в теле запроса
-        );
-        if (response.status === 200) {
-          alert(`Файл переименован в: ${newName}`);
-          fetchFiles();
-        } else {
-          alert('Ошибка при переименовании файла');
-        }
-      } catch (error) {
-        console.error('Ошибка при переименовании файла:', error);
-        alert('Ошибка при переименовании файла');
-      }
+  const moveFile = async (fileId, newProjectId) => {
+    try {
+      await axios.put(`http://localhost:5000/files/${projectId}/${fileId}/move`, {
+        newProjectId
+      });
+      message.success('Файл перемещен');
+      fetchFiles();
+    } catch (error) {
+      message.error('Ошибка при перемещении файла');
     }
   };
 
   useEffect(() => {
-    let updatedFiles = [...files];
-
+    let updated = [...files];
     if (searchTerm) {
-      updatedFiles = updatedFiles.filter((file) =>
-        file.filename.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      updated = updated.filter(f => f.filename.toLowerCase().includes(searchTerm.toLowerCase()));
     }
-
     if (filterSize) {
-      updatedFiles = updatedFiles.filter((file) =>
-        convertFileSize(file.file_size) <= parseFloat(filterSize)
-      );
+      updated = updated.filter(f => convertFileSize(f.file_size) <= parseFloat(filterSize));
     }
-
     switch (sortType) {
-      case 'nameAsc':
-        updatedFiles.sort((a, b) => a.filename.localeCompare(b.filename));
-        break;
-      case 'nameDesc':
-        updatedFiles.sort((a, b) => b.filename.localeCompare(a.filename));
-        break;
-      case 'sizeAsc':
-        updatedFiles.sort((a, b) => a.file_size - b.file_size);
-        break;
-      case 'sizeDesc':
-        updatedFiles.sort((a, b) => b.file_size - a.file_size);
-        break;
-      case 'dateAsc':
-        updatedFiles.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-        break;
-      case 'dateDesc':
-        updatedFiles.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        break;
-      default:
-        break;
+      case 'nameAsc': updated.sort((a, b) => a.filename.localeCompare(b.filename)); break;
+      case 'nameDesc': updated.sort((a, b) => b.filename.localeCompare(a.filename)); break;
+      case 'sizeAsc': updated.sort((a, b) => a.file_size - b.file_size); break;
+      case 'sizeDesc': updated.sort((a, b) => b.file_size - a.file_size); break;
+      case 'dateAsc': updated.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); break;
+      case 'dateDesc': updated.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); break;
+      default: break;
     }
+    setFilteredFiles(updated);
+  }, [files, searchTerm, sortType, filterSize, sizeUnit]);
 
-    setFilteredFiles(updatedFiles);
-  }, [searchTerm, sortType, filterSize, files, sizeUnit]);
-
-  const copyApiRequest = () => {
-    const requestText = `GET http://localhost:5000/client/${projectId}/files\nAuthorization: Bearer ${apiKey}`;
-    navigator.clipboard.writeText(requestText)
-      .then(() => {
-        setCopyStatus('Скопировано!');
-        setTimeout(() => setCopyStatus('Копировать'), 2000);
-      })
-      .catch(err => {
-        console.error('Ошибка копирования:', err);
-        setCopyStatus('Ошибка');
-      });
-  };
-
-  // Функция для переключения видимости API ключа
-  const toggleApiKeyVisibility = () => {
-    setShowApiKey(!showApiKey);
-  };
   return (
-    <div className="container">
-      
-      {showModal && (
-          <div className="file-modal-overlay" onClick={() => setShowModal(false)}>
-            <div
-              className="file-upload-modal"
-              onClick={(e) => e.stopPropagation()}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-            >
-              <h2 className="file-modal-title">Загрузка файлов</h2>
-              <p className="file-modal-text">Перетащите файлы сюда или выберите их вручную</p>
-              <input
-                type="file"
-                multiple
-                onChange={handleFileChange}
-                className="file-input"
-              />
-              {selectedFiles.length > 0 && (
-                <ul className="file-preview-list">
-                  {selectedFiles.map((file, index) => (
-                    <li key={index} className="file-preview-item">
-                      {file.name}
-                      {uploadProgress[index] !== undefined && (
-                        <progress
-                          value={uploadProgress[index]}
-                          max="100"
-                          className="progress-bar"
-                        >
-                          {uploadProgress[index]}%
-                        </progress>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <button className="file-upload-button" onClick={handleUpload}>
-                Загрузить файлы
-              </button>
-            </div>
-          </div>
-        )}
-        <div className="api-request-block">
-        <div className="api-request-content">
-          <h3>API запрос для получения файлов:</h3>
-          <pre className="api-request-text">
-            GET http://localhost:5000/client/{projectId}/files{'\n'}
-            Authorization: Bearer {showApiKey ? apiKey : '••••••••••••••••'}
-          </pre>
-          <div className="api-request-buttons">
-            <button 
-              className="copy-button" 
-              onClick={copyApiRequest}
-            >
-              {copyStatus}
-            </button>
-            <button 
-              className="toggle-api-key-button" 
-              onClick={toggleApiKeyVisibility}
-            >
-              {showApiKey ? 'Скрыть ключ' : 'Показать ключ'}
-            </button>
-          </div>
-        </div>
-      </div>
-      <div className="filter-section">
-        <input
-          type="text"
-          placeholder="Поиск по имени"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+    <div style={{ padding: 24 }}>
+      <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/yourproject')}>Назад</Button>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalVisible(true)}>Загрузить файлы</Button>
+      </Space>
 
-          <input
-          type="number"
-          placeholder={`Макс. размер (${sizeUnit})`}
-          value={filterSize}
-          onChange={(e) => setFilterSize(e.target.value)}
-        />
+      <Card title="API-запрос для получения файлов" bordered style={{ marginBottom: 24 }}>
+        <pre>GET http://localhost:5000/client/{projectId}/files\nAuthorization: Bearer {showApiKey ? apiKey : '•••••••••••••'}</pre>
+        <Space>
+          <Button icon={<CopyOutlined />} onClick={copyApiRequest}>{copyStatus || 'Копировать'}</Button>
+          <Button icon={showApiKey ? <EyeInvisibleOutlined /> : <EyeTwoTone />} onClick={() => setShowApiKey(!showApiKey)}>
+            {showApiKey ? 'Скрыть ключ' : 'Показать ключ'}
+          </Button>
+        </Space>
+      </Card>
 
-        <select value={sizeUnit} onChange={(e) => setSizeUnit(e.target.value)}>
-          <option value="bytes">Байты</option>
-          <option value="KB">Килобайты (KB)</option>
-          <option value="MB">Мегабайты (MB)</option>
-          <option value="GB">Гигабайты (GB)</option>
-        </select>
+      <Card title="Фильтрация и сортировка" bordered style={{ marginBottom: 24, }}>
+        <Space direction="vertical" size="middle" style={{ width: '100%', display: 'flex' }}>
+          <Input placeholder="Поиск по имени" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+          <Input type="number" placeholder={`Макс. размер (${sizeUnit})`} value={filterSize} onChange={e => setFilterSize(e.target.value)} />
+          <Select value={sizeUnit} onChange={setSizeUnit} style={{ width: 200 }}>
+            <Option value="bytes">Байты</Option>
+            <Option value="KB">Килобайты</Option>
+            <Option value="MB">Мегабайты</Option>
+            <Option value="GB">Гигабайты</Option>
+          </Select>
+          <Select value={sortType} onChange={setSortType} style={{ width: 200 }}>
+            <Option value="">Без сортировки</Option>
+            <Option value="nameAsc">Имя (A-Z)</Option>
+            <Option value="nameDesc">Имя (Z-A)</Option>
+            <Option value="sizeAsc">Размер (по возр.)</Option>
+            <Option value="sizeDesc">Размер (по убыв.)</Option>
+            <Option value="dateAsc">Дата (старые)</Option>
+            <Option value="dateDesc">Дата (новые)</Option>
+          </Select>
+        </Space>
+      </Card>
 
-
-        <select value={sortType} onChange={(e) => setSortType(e.target.value)}>
-          <option value="">Сортировка</option>
-          <option value="nameAsc">По имени (A-Z)</option>
-          <option value="nameDesc">По имени (Z-A)</option>
-          <option value="sizeAsc">По размеру (возр.)</option>
-          <option value="sizeDesc">По размеру (убыв.)</option>
-          <option value="dateAsc">По дате (старые)</option>
-          <option value="dateDesc">По дате (новые)</option>
-        </select>
-      </div>
-      <div className="navigation-section">
-        <button className="back-button" onClick={() => navigate('/yourproject')}>
-          Назад
-        </button>
-        <button className="file-upload-modal-button" onClick={() => setShowModal(true)}>
-          ➕ Загрузить файлы
-        </button>
-      </div>
-
-      <h2>Список файлов для проекта {projectId}</h2>
-      {loading ? (
-        <p>Загрузка...</p>
-      ) : (
-        <div className="file-list">
-          {filteredFiles.length > 0 ? (
-            filteredFiles.map((file) => ( 
-              <File 
-                file={file} 
-                deleteFile={deleteFile} 
-                renameFile={renameFile} 
-                onOpenContextMenu={() => handleOpenContextMenu(file.id)}
-                userId={userId}
-                moveFile={moveFile}
-              />
-            ))
-          ) : (
-            <p>Файлы не найдены</p>
-          )}
-        </div>
+      <Title level={3}>Список файлов</Title>
+      {loading ? <p>Загрузка...</p> : (
+        <div className="file-list-wrapper">
+        {filteredFiles.map(file => (
+          <File
+            key={file.id}
+            file={file}
+            deleteFile={deleteFile}
+            renameFile={renameFile}
+            userId={userId}
+            moveFile={moveFile}
+          />
+        ))}
+      </div>      
       )}
+
+      <Modal
+        open={isModalVisible}
+        title="Загрузка файлов"
+        onCancel={() => setIsModalVisible(false)}
+        onOk={handleUpload}
+        okText="Загрузить"
+      >
+        <Upload multiple beforeUpload={() => false} onChange={handleFileChange} fileList={selectedFiles.map((f, i) => ({ uid: i, name: f.name }))}>
+          <Button icon={<UploadOutlined />}>Выбрать файлы</Button>
+        </Upload>
+        <List
+          dataSource={selectedFiles}
+          renderItem={(file, index) => (
+            <List.Item>
+              <span>{file.name}</span>
+              {uploadProgress[index] !== undefined && (
+                <Progress percent={Math.round(uploadProgress[index])} size="small" />
+              )}
+            </List.Item>
+          )}
+        />
+      </Modal>
     </div>
   );
 };
