@@ -1,106 +1,61 @@
-/* Общие стили для страницы */
-.user-projects-container {
-    max-width: 2000px;
-    margin: 40px auto;
-    padding: 20px;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-  }
-  
-  /* Заголовок */
-  .user-projects-container h1 {
-    font-size: 24px;
-    color: #333;
-    margin-bottom: 20px;
-  }
-  
-  /* Список проектов */
-  .project-list {
-    list-style: none;
-    padding: 0;
-  }
-  
-  /* UserProjectList.css */
+/* Подключать в компоненте: import './UserProjects.css'; */
 
-/* Контейнер для всех проектов */
+/* Общий контейнер */
 .user-projects-container {
-  padding: 20px;
-  background-color: #f9f9f9;
+  padding: 24px;
+  background-color: #f6ffed; /* светло-зеленый фон */
+  min-height: 100vh;
 }
 
-/* Контейнер для списка проектов */
-.project-list {
-  display: grid; /* Используем grid для расположения */
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Автоматическое распределение колонок */
-  gap: 20px; /* Расстояние между проектами */
-  padding: 20px;
-  grid-auto-rows: minmax(150px, auto); /* Минимальная высота строки */
+/* Заголовок */
+.ant-typography {
+  color: #389e0d !important; /* насыщенный зеленый */
 }
 
-/* Стили для каждого проекта */
-.project-item {
-  background-color: #fff;
-  border: 1px solid #ddd;
+/* Кнопки */
+.ant-btn-primary {
+  background-color: #52c41a;
+  border-color: #52c41a;
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  background-color: #389e0d;
+  border-color: #389e0d;
+}
+
+/* Карточки */
+.ant-card {
+  border-color: #b7eb8f !important;
+  border-radius: 12px;
+  transition: box-shadow 0.2s ease;
+}
+
+.ant-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Модальные окна */
+.ant-modal-title {
+  color: #52c41a;
+}
+
+.ant-modal-content {
   border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  transition: transform 0.3s ease;
 }
 
-/* Эффект при наведении на проект */
-.project-item:hover {
-  transform: translateY(-5px);
+/* Инпуты и TextArea */
+.ant-input,
+.ant-input-textarea {
+  border-radius: 6px;
 }
 
-/* Заголовок и описание проекта */
-.project-item h2 {
-  font-size: 1.2rem;
-  margin-bottom: 10px;
-  font-weight: bold;
-  color: #333;
+/* Иконка пользователя */
+.user-add-button {
+  color: #52c41a;
+  transition: color 0.2s ease;
 }
 
-.project-item p {
-  font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 20px;
-}
-
-/* Кнопки в проекте */
-.project-item .actions {
-  display: flex;
-  justify-content: space-between;
-}
-
-.project-item .actions button {
-  padding: 8px 12px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.project-item .actions button:hover {
-  background-color: #0056b3;
-}
-
-.logout-button {
-  margin-left: 10px;
-  padding: 8px 16px;
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.logout-button:hover {
-  background-color: #c0392b;
+.user-add-button:hover {
+  color: #389e0d;
 }

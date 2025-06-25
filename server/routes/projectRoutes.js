@@ -1,5 +1,5 @@
 const express = require('express');
-const { getProjects, createProject, deleteProject, getUserProject, updatedProject1 } = require('../controllers/projectController');
+const { getProjects, createProject, deleteProject, getUserProject, updatedProject1, shareProjectAccess, getProjectAccessUsers } = require('../controllers/projectController');
 const logger = require('../middlewares/logger');
 
 const router = express.Router();
@@ -12,8 +12,10 @@ router.use((req, res, next) => {
 
 router.get('/', getProjects);
 router.get('/user/:id', getUserProject);
+router.get('/:id/access', getProjectAccessUsers);
 router.post('/', createProject);
 router.put('/:id', updatedProject1);
+router.post('/:id/share', shareProjectAccess)
 router.delete('/:id', deleteProject);
 router.get('/download-log', (req, res) => {
     const logFilePath = path.join(__dirname, '..', 'logs', 'app.log');

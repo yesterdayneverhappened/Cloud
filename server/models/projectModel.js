@@ -85,4 +85,45 @@ const updatedProject = async (name, description, projectId) => {
   const sql = `UPDATE projects SET name = ?, description = ? WHERE id = ?`;
   await con.execute(sql, [name, description, projectId])
 }
-module.exports = { projectList, addProject, deleteProjectFromDatabase, userProjectList, updatedProject };
+
+const findClientByEmail = async (email) => {
+  const [rows] = await con.execute('SELECT id FROM clients WHERE domain = ?', [email]);
+  return rows[0];
+};
+
+const checkExistingAccess = async (projectId, clientId) => {
+  const [rows] = await con.execute(
+    'SELECT * FROM project_access WHERE project_id = ? AND client_id = ?',
+    [projectId, clientId]
+  );
+  return rows.length > 0;
+};
+
+const grantAccessToProject = async (projectId, clientId) => {
+  await con.execute(
+    'INSERT INTO project_access (project_id, client_id) VALUES (?, ?)',
+    [projectId, clientId]
+  );
+};
+
+const getAccessUsersByProjectId = async (projectId) => {
+  const [rows] = await con.execute(`
+    SELECT c.id, c.domain, c.name
+    FROM project_access pa
+    JOIN clients c ON pa.client_id = c.id
+    WHERE pa.project_id = ?
+  `, [projectId]);
+
+  return rows;
+};
+module.exports = {
+   projectList,
+   addProject,
+   deleteProjectFromDatabase, 
+   userProjectList, 
+   updatedProject, 
+   findClientByEmail, 
+   checkExistingAccess, 
+   grantAccessToProject, 
+   getAccessUsersByProjectId 
+};

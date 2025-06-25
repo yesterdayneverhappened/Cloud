@@ -1,4 +1,4 @@
-const { projectList, addProject, deleteProjectFromDatabase, userProjectList, updatedProject } = require('../models/projectModel');
+const { projectList, addProject, deleteProjectFromDatabase, userProjectList, updatedProject, findClientByEmail, checkExistingAccess, grantAccessToProject, getAccessUsersByProjectId } = require('../models/projectModel');
 const logger = require('../middlewares/logger');
 
 // Получение всех проектов
@@ -73,4 +73,42 @@ const updatedProject1 = async (req, res) => {
   }
 };
 
-module.exports = { getProjects, createProject, deleteProject, getUserProject, updatedProject1 };
+const shareProjectAccess = async (req, res) => {
+  const projectId = req.params.id;
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Email обязателен' });
+  }
+
+  try {
+    const client = await findClientByEmail(email);
+    if (!client) {
+      return res.status(404).json({ message: 'Пользователь с таким email не найден' });
+    }
+
+    const alreadyHasAccess = await checkExistingAccess(projectId, client.id);
+    if (alreadyHasAccess) {
+      return res.status(400).json({ message: 'Пользователю уже предоставлен доступ' });
+    }
+
+    await grantAccessToProject(projectId, client.id);
+
+    res.status(200).json({ message: 'Доступ успешно предоставлен' });
+  } catch (error) {
+    console.error('Ошибка при предоставлении доступа:', error);
+    res.status(500).json({ message: 'Внутренняя ошибка сервера' });
+  }
+};
+const getProjectAccessUsers = async (req, res) => {
+  const projectId = req.params.id;
+
+  try {
+    const users = await getAccessUsersByProjectId(projectId);
+    res.status(200).json(users);
+  } catch (err) {
+    console.error('Ошибка при получении списка доступа:', err);
+    res.status(500).json({ message: 'Внутренняя ошибка сервера' });
+  }
+};
+module.exports = { getProjects, createProject, deleteProject, getUserProject, updatedProject1, shareProjectAccess, getProjectAccessUsers };
