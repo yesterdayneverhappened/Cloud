@@ -24,6 +24,7 @@ const UserProjects = () => {
   const [shareModalProjectId, setShareModalProjectId] = useState(null);
   const [sharedUsers, setSharedUsers] = useState([]);
   const [loadingSharedUsers, setLoadingSharedUsers] = useState(false);
+  const [accessLevels, setAccessLevels] = useState({});
 
 
   const navigate = useNavigate();
@@ -50,18 +51,41 @@ const UserProjects = () => {
   const fetchUserProjects = async () => {
     const token = localStorage.getItem('token');
     if (!token) return;
+  
     try {
       const decoded = jwtDecode(token);
       const res = await axios.get(`http://localhost:5000/projects/user/${decoded.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setProjects(res.data);
+  
+      const projectsWithAccess = await Promise.all(res.data.map(async (project) => {
+        try {
+          const accessRes = await axios.get(`http://localhost:5000/api/users/${project.id}/rights/${decoded.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          return {
+            ...project,
+            accessLevel: accessRes.data.access_level
+          };
+        } catch {
+          return { ...project, accessLevel: 'read' }; // если не получено — только просмотр
+        }
+      }));
+  
+      setProjects(projectsWithAccess);
+  
+      // отдельно сохраняем уровни доступа по id для удобства
+      const levelMap = {};
+      projectsWithAccess.forEach(p => levelMap[p.id] = p.accessLevel);
+      setAccessLevels(levelMap);
+  
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
+  
 
   const fetchProjectFilesCount = async (projectId) => {
     try {
@@ -186,8 +210,15 @@ const UserProjects = () => {
             <Col xs={24} sm={12} md={8} key={project.id}>
               <Card
                 title={<span onClick={() => navigate(`/yourproject/${project.id}`)} style={{ cursor: 'pointer', color: '#389e0d' }}>{project.name}</span>}
-                extra={<Dropdown overlay={menu} trigger={['click']}><Button icon={<EllipsisOutlined />} /></Dropdown>}
-                bordered style={{ borderColor: '#52c41a' }}>
+                extra={
+                  (project.accessLevel !== 'read') && (
+                    <Dropdown overlay={menu} trigger={['click']}>
+                      <Button icon={<EllipsisOutlined />} />
+                    </Dropdown>
+                  )
+                }                
+                bordered 
+                style={{ borderColor: project.accessLevel === 'read' ? '#d9d9d9' : '#52c41a' }}>
                 <Paragraph>{project.description}</Paragraph>
               </Card>
             </Col>

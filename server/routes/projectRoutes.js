@@ -1,5 +1,5 @@
 const express = require('express');
-const { getProjects, createProject, deleteProject, getUserProject, updatedProject1, shareProjectAccess, getProjectAccessUsers } = require('../controllers/projectController');
+const { getProjects, createProject, deleteProject, getUserProject, updatedProject1, shareProjectAccess, getProjectAccessUsers, getProjectAccess, updateAccess } = require('../controllers/projectController');
 const logger = require('../middlewares/logger');
 
 const router = express.Router();
@@ -13,6 +13,9 @@ router.use((req, res, next) => {
 router.get('/', getProjects);
 router.get('/user/:id', getUserProject);
 router.get('/:id/access', getProjectAccessUsers);
+router.get('/:projectId/access-user', getProjectAccess);
+// Обновить доступ конкретного клиента
+router.put('/:projectId/access/:clientId', updateAccess);
 router.post('/', createProject);
 router.put('/:id', updatedProject1);
 router.post('/:id/share', shareProjectAccess)

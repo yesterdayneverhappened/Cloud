@@ -46,6 +46,27 @@ const UserFileList = () => {
   const [copyStatus, setCopyStatus] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [accessLevel, setAccessLevel] = useState(null);
+
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+  const decoded = jwtDecode(token);
+  setUserId(decoded.id);
+
+  // Запрос прав пользователя
+  axios.get(`http://localhost:5000/api/users/${projectId}/rights/${decoded.id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(res => {
+    setAccessLevel(res.data.access_level);
+  }).catch(() => setAccessLevel(null));
+
+  fetchFiles();
+  fetchApiKey();
+}, [projectId]);
+  useEffect(() => {
+    console.log(accessLevel)
+  },[accessLevel])
 
   const navigate = useNavigate();
 
@@ -92,6 +113,10 @@ const UserFileList = () => {
 
   const handleUpload = async () => {
     if (!selectedFiles.length) return message.warning('Выберите файлы');
+    if (accessLevel !== 'write' && accessLevel !== 'owner') {
+      message.error('У вас нет прав на загрузку файлов');
+      return;
+    }
 
     try {
       for (const file of selectedFiles) {
@@ -193,12 +218,19 @@ const UserFileList = () => {
   return (
     <div style={{ padding: 24 }}>
       <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/yourproject')}>Назад</Button>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalVisible(true)}>Загрузить файлы</Button>
-      </Space>
+            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/yourproject')}>Назад</Button>
+
+            {(accessLevel === 'write' || accessLevel === 'owner') && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalVisible(true)}>Загрузить файлы</Button>
+            )}
+
+            {accessLevel === 'owner' && (
+              <Button onClick={() => navigate(`/yourproject/${projectId}/access`)}>Доступ к файлам проекта</Button>
+            )}
+          </Space>
 
       <Card title="API-запрос для получения файлов" bordered style={{ marginBottom: 24 }}>
-        <pre>GET http://localhost:5000/client/{projectId}/files\nAuthorization: Bearer {showApiKey ? apiKey : '•••••••••••••'}</pre>
+        <pre>GET http://localhost:5000/client/{projectId}/files <br></br>Authorization: Bearer {showApiKey ? apiKey : '•••••••••••••'}</pre>
         <Space>
           <Button icon={<CopyOutlined />} onClick={copyApiRequest}>{copyStatus || 'Копировать'}</Button>
           <Button icon={showApiKey ? <EyeInvisibleOutlined /> : <EyeTwoTone />} onClick={() => setShowApiKey(!showApiKey)}>
@@ -240,6 +272,7 @@ const UserFileList = () => {
             renameFile={renameFile}
             userId={userId}
             moveFile={moveFile}
+            accessLevel={accessLevel}
           />
         ))}
       </div>      

@@ -88,23 +88,23 @@ const getProjectReport = async () => {
   }
 };
 
-const getClientById = (clientId) => {
-  return new Promise((resolve, reject) => {
-    const query = 'SELECT * FROM clients WHERE id = ?';
+const getClientById = async (clientId) => {
+  try {
+    const [results] = await con.execute(
+      'SELECT * FROM clients WHERE id = ?',
+      [clientId]
+    );
 
-    con.execute(query, [clientId], (err, results) => {
-      if (err) {
-        return reject('Ошибка запроса: ' + err.message); // Добавил `.message` для читаемости
-      }
+    if (!results.length) {
+      throw new Error('Клиент не найден');
+    }
 
-      if (results.length === 0) {
-        return reject('Клиент не найден');
-      }
-
-      resolve(results[0]);
-    });
-  });
+    return results[0];
+  } catch (err) {
+    throw new Error('Ошибка при получении клиента: ' + err.message);
+  }
 };
+
 
 const getAllClient = async (req, res) => {
   try {

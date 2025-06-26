@@ -11,6 +11,7 @@ import UserFileList from './UserFileList';
 import FileList from './FileList';
 import ProjectCharts from './ChartsPage';
 import UserManagement from './UserList';
+import ProjectAccessPage from './AcessList';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -25,6 +26,7 @@ root.render(
         <Route path="/charts" element={<ProjectCharts />} />
         <Route path="/yourproject" element={<UserProjects />} />
         <Route path="/yourproject/:projectId" element={<UserFileList />} />
+        <Route path="/yourproject/:projectId/access" element={<ProjectAccessPage />} />
     </Routes>
   </BrowserRouter>
 );

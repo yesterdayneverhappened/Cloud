@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { registerUser, getUserByEmail, getActivityData, getProjectReport, getClientById, getAllClient } = require('../models/userModels');
-
+const con = require('../config/db');
 const register = async (req, res) => {
     try {
       const { name, email, password } = req.body;
@@ -106,6 +106,36 @@ const getAllUsers = async (req, res) => {
     res.status(500).json({ error: 'Неизвестная ошибка' });
   }
 };
+// GET /projects/:projectId/rights/:userId
+const getUserProjectRights = async (req, res) => {
+  const { projectId, userId } = req.params;
+
+  try {
+    // Проверяем, владелец ли
+    const [projects] = await con.execute(
+      'SELECT client_id FROM projects WHERE id = ?',
+      [projectId]
+    );
+    if (projects.length === 0) return res.status(404).json({ error: 'Проект не найден' });
+
+    if (projects[0].client_id === Number(userId)) {
+      return res.json({ access_level: 'owner' });
+    }
+
+    // Иначе ищем в project_access
+    const [access] = await con.execute(
+      'SELECT access_level FROM project_access WHERE project_id = ? AND client_id = ?',
+      [projectId, userId]
+    );
+
+    if (access.length === 0) return res.json({ access_level: null });
+
+    res.json({ access_level: access[0].access_level });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+};
 
 
-module.exports = { register, login, getUsersActivity, exportLogFile, getUser, getAllUsers };
+module.exports = { register, login, getUsersActivity, exportLogFile, getUser, getAllUsers, getUserProjectRights };

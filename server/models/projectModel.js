@@ -31,17 +31,25 @@ const projectList = async () => {
 };
 
 
-
 const userProjectList = async (clientId) => {
-  const sql = "SELECT * FROM projects WHERE client_id = ?";
+  const sql = `
+    SELECT DISTINCT p.*, 
+      CASE 
+        WHEN p.client_id = ? THEN 'owner'
+        ELSE pa.access_level
+      END AS effective_access
+    FROM projects p
+    LEFT JOIN project_access pa ON p.id = pa.project_id AND pa.client_id = ?
+    WHERE p.client_id = ? OR pa.client_id = ?
+  `;
   try {
-    const [rows] = await con.execute(sql, [clientId]);
-    console.log(rows)
+    const [rows] = await con.execute(sql, [clientId, clientId, clientId, clientId]);
     return rows;
   } catch (err) {
     throw err;
   }
 };
+
 
 const addProject = async (name, description, userID) => {
   const now = new Date();
@@ -125,5 +133,5 @@ module.exports = {
    findClientByEmail, 
    checkExistingAccess, 
    grantAccessToProject, 
-   getAccessUsersByProjectId 
+   getAccessUsersByProjectId,
 };

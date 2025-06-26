@@ -5,7 +5,7 @@ import mammoth from 'mammoth';
 import { Modal, Menu, Dropdown, Button, List, message, Input } from 'antd';
 import { MoreOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 
-export default function File({ file, deleteFile, renameFile, userId, moveFile }) {
+export default function File({ file, deleteFile, renameFile, userId, moveFile, accessLevel }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalContent, setModalContent] = useState(null);
@@ -185,12 +185,17 @@ export default function File({ file, deleteFile, renameFile, userId, moveFile })
   const menu = (
     <Menu onClick={handleMenuClick}>
       <Menu.Item key="info">ℹ️ Информация</Menu.Item>
-      <Menu.Item key="rename">✏️ Переименовать</Menu.Item>
-      <Menu.Item key="delete">❌ Удалить</Menu.Item>
-      <Menu.Item key="move">📂 Переместить</Menu.Item>
       <Menu.Item key="copy">📄 Копировать</Menu.Item>
+      {(accessLevel === 'write' || accessLevel === 'owner') && (
+        <>
+          <Menu.Item key="rename">✏️ Переименовать</Menu.Item>
+          <Menu.Item key="delete">❌ Удалить</Menu.Item>
+          <Menu.Item key="move">📂 Переместить</Menu.Item>
+        </>
+      )}
     </Menu>
   );
+  
 
   return (
     <div
@@ -240,7 +245,7 @@ export default function File({ file, deleteFile, renameFile, userId, moveFile })
         title={modalTitle}
         onCancel={() => setModalVisible(false)}
         footer={null}
-        width={modalTitle === 'Просмотр PDF' ? 900 : 700}
+        width={1600}
         bodyStyle={{ maxHeight: '70vh', overflowY: 'auto' }}
         centered
         confirmLoading={loading}

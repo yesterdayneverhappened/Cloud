@@ -1,6 +1,6 @@
-const { projectList, addProject, deleteProjectFromDatabase, userProjectList, updatedProject, findClientByEmail, checkExistingAccess, grantAccessToProject, getAccessUsersByProjectId } = require('../models/projectModel');
+const { projectList, addProject, deleteProjectFromDatabase, userProjectList, updatedProject, findClientByEmail, checkExistingAccess, grantAccessToProject, getAccessUsersByProjectId,  } = require('../models/projectModel');
 const logger = require('../middlewares/logger');
-
+const con = require('../config/db');
 // Получение всех проектов
 const getProjects = async (req, res) => {
   try {
@@ -111,4 +111,65 @@ const getProjectAccessUsers = async (req, res) => {
     res.status(500).json({ message: 'Внутренняя ошибка сервера' });
   }
 };
-module.exports = { getProjects, createProject, deleteProject, getUserProject, updatedProject1, shareProjectAccess, getProjectAccessUsers };
+
+const getProjectAccess = async (req, res) => {
+  const { projectId } = req.params;
+  const sql = `
+    SELECT c.id, c.name, c.domain, pa.access_level
+    FROM clients c
+    INNER JOIN project_access pa ON c.id = pa.client_id AND pa.project_id = ?
+  `;
+
+  try {
+    const [rows] = await con.execute(sql, [projectId]);
+    res.json(rows);
+  } catch (error) {
+    console.error('Ошибка при получении доступа:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+};
+
+// PUT /projects/:projectId/access/:clientId
+// PUT /projects/:projectId/access/:clientId
+const updateAccess = async (req, res) => {
+  const { projectId, clientId } = req.params;
+  const { access_level } = req.body;
+
+  // Валидация входных данных
+  if (!['read', 'write', 'owner', null].includes(access_level)) {
+    return res.status(400).json({ error: 'Invalid access level' });
+  }
+
+  try {
+    // Удаление доступа если передано null
+    if (access_level === null) {
+      const [result] = await con.execute(
+        'DELETE FROM project_access WHERE project_id = ? AND client_id = ?',
+        [projectId, clientId]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Access record not found' });
+      }
+      
+      return res.json({ message: 'Access removed' });
+    }
+
+    // Обновление существующего доступа
+    const [result] = await con.execute(
+      'UPDATE project_access SET access_level = ? WHERE project_id = ? AND client_id = ?',
+      [access_level, projectId, clientId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Access record not found' });
+    }
+
+    res.json({ message: 'Access updated' });
+
+  } catch (error) {
+    console.error('Error updating access:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+module.exports = { getProjects, createProject, deleteProject, getUserProject, updatedProject1, shareProjectAccess, getProjectAccessUsers, getProjectAccess, updateAccess };
